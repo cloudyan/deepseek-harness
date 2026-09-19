@@ -51,7 +51,14 @@ async function runPackageScript(script: string, cwd: string): Promise<void> {
   if (packageManager === undefined || packageManager === '') {
     throw new Error('desktop development: invoke this launcher through pnpm run dev:desktop or start:desktop')
   }
-  await run(process.execPath, [packageManager, 'run', script], cwd)
+  // pnpm resolves npm_execpath to a native binary with @pnpm/exe installs (the default for
+  // pnpm >= 10 self-managed versions); only route JS entrypoints through Node
+  // (same logic as scripts/pnpm-invocation.ts).
+  if (/\.[cm]?js$/iu.test(packageManager)) {
+    await run(process.execPath, [packageManager, 'run', script], cwd)
+  } else {
+    await run(packageManager, ['run', script], cwd)
+  }
 }
 
 async function launchElectron(): Promise<void> {
