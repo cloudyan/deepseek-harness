@@ -44,6 +44,10 @@ Desktop session:
 - **代价**：同一 agent 两种形态能力不一致——desktop 里 Python 技能用的锁定 CPython 3.12.14，CLI 里取决于用户系统 Python；headless/CI 若需可复现执行也没有现成机制。
 - **演进空间**：`$DSH_HOME/dsh-runtimes/` 是 per-user 共享路径（`packages/util/home-paths`），任何 dsh 进程都可读。把供给逻辑从 desktop scripts 提升为共享包或 `dsh runtime install` 子命令，CLI/headless 即可复用同一份锁定运行时，消除形态差异。
 
+### IM 入口现状：无 im-gateway，最近的种子是 webhook
+
+仓库没有 im/gateway/bot/messaging 类包。最接近的是 `packages/webhook/`（webhook · webhook-github）：接收**已验证的外部 provider 事件**，按规则 fire-and-forget 地创建 DSH Session（无投递库/队列/重试/去重，也无 Agent 完成态回传）。它是"外部事件 → 会话"的单向通道，缺 IM 网关需要的**双向对话**（回复路由回消息平台、会话↔聊天线程绑定、幂等/重试）。若未来做 IM 入口，webhook 家族可承载入站事件，出站回复需要新增 provider 适配层（或经统一 app-server/SDK 面）。
+
 ## 各应用职责
 
 ### apps/cli（`@deepseek-ai/dsh`，统一启动器）
