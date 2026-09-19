@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 780" font-family="-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5F5E5A"/>
+    </marker>
+    <marker id="arrowG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8A8880"/>
+    </marker>
+  </defs>
+
+  <style>
+    .panel { fill: #FAF9F6; stroke: #D8D6D0; stroke-width: 1; rx: 10; }
+    .ptitle { font-size: 13px; font-weight: 700; fill: #3D3B36; }
+    .pnote { font-size: 10px; fill: #8A8880; }
+    .box { fill: #FFFFFF; stroke: #8A8880; stroke-width: 1; }
+    .bt { font-size: 12px; font-weight: 600; fill: #1F1E1B; }
+    .bs { font-size: 10px; fill: #6B6963; }
+    .dbox { fill: #E9E8E4; stroke: #ADABA4; stroke-width: 1; stroke-dasharray: 5 3; }
+    .dt { font-size: 12px; font-weight: 600; fill: #8A8880; }
+    .sbox { fill: #EAF1FA; stroke: #2F6BAE; stroke-width: 1; }
+    .st { font-size: 11.5px; font-weight: 700; fill: #1E4E82; }
+    .ss { font-size: 10px; fill: #3D5C7A; }
+    .bar { fill: #FDF3E3; stroke: #C08A2D; stroke-width: 1; }
+    .bart { font-size: 11.5px; font-weight: 700; fill: #8A5F13; }
+    .gbox { fill: #EEF4EA; stroke: #3B6D11; stroke-width: 1; }
+    .gt { font-size: 11.5px; font-weight: 700; fill: #2F5A0C; }
+    .gm { font-size: 10.5px; fill: #46543A; }
+    .rbox { fill: #F3EDF7; stroke: #7A4FA3; stroke-width: 1; }
+    .rt { font-size: 11px; font-weight: 600; fill: #55307A; }
+    .arrow { fill: none; stroke: #5F5E5A; stroke-width: 1.5; }
+  </style>
+
+  <!-- ============ ① 入口层 ============ -->
+  <rect class="panel" x="16" y="14" width="648" height="156" rx="10"/>
+  <text class="ptitle" x="30" y="36">① 入口层</text>
+  <text class="pnote" x="664" y="36" text-anchor="end">实线 = 已支持 · 虚线灰底 = 未支持（预留位）</text>
+
+  <rect class="box" x="32" y="48" width="148" height="42" rx="7"/>
+  <text class="bt" x="106" y="65" text-anchor="middle">CLI 启动器</text>
+  <text class="bs" x="106" y="81" text-anchor="middle">dsh（bin → runProfile）</text>
+
+  <rect class="box" x="192" y="48" width="148" height="42" rx="7"/>
+  <text class="bt" x="266" y="65" text-anchor="middle">Web 浏览器</text>
+  <text class="bs" x="266" y="81" text-anchor="middle">同机直连 127.0.0.1</text>
+
+  <rect class="box" x="352" y="48" width="148" height="42" rx="7"/>
+  <text class="bt" x="426" y="65" text-anchor="middle">Desktop</text>
+  <text class="bs" x="426" y="81" text-anchor="middle">Electron 沙箱 renderer</text>
+
+  <rect class="box" x="512" y="48" width="148" height="42" rx="7"/>
+  <text class="bt" x="586" y="65" text-anchor="middle">Headless</text>
+  <text class="bs" x="586" y="81" text-anchor="middle">脚本 / CI · one-shot</text>
+
+  <rect class="box" x="32" y="100" width="148" height="40" rx="7"/>
+  <text class="bt" x="106" y="117" text-anchor="middle">SDK 客户端</text>
+  <text class="bs" x="106" y="132" text-anchor="middle">TS · Python（子进程 spawn）</text>
+
+  <rect class="box" x="192" y="100" width="148" height="40" rx="7"/>
+  <text class="bt" x="266" y="117" text-anchor="middle">ACP 编辑器客户端</text>
+  <text class="bs" x="266" y="132" text-anchor="middle">Zed 等自动化客户端</text>
+
+  <rect class="dbox" x="352" y="100" width="148" height="40" rx="7"/>
+  <text class="dt" x="426" y="117" text-anchor="middle">IM Bot</text>
+  <text class="bs" x="426" y="132" text-anchor="middle" fill="#8A8880">消息平台入口（缺位）</text>
+
+  <rect class="dbox" x="512" y="100" width="148" height="40" rx="7"/>
+  <text class="dt" x="586" y="117" text-anchor="middle">移动端 / 远程</text>
+  <text class="bs" x="586" y="132" text-anchor="middle" fill="#8A8880">需统一 app-server 才可接入</text>
+
+  <!-- entry -> service funnel -->
+  <path class="arrow" d="M180 176 L180 194" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M340 176 L340 194" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M500 176 L500 194" marker-end="url(#arrow)"/>
+  <text class="pnote" x="340" y="189" text-anchor="middle" dx="70">按 profile 对接</text>
+
+  <!-- ============ ② 对接服务层 ============ -->
+  <rect class="panel" x="16" y="196" width="648" height="146" rx="10"/>
+  <text class="ptitle" x="30" y="218">② 对接服务层（协议适配器，无单一 app-server）</text>
+
+  <rect class="sbox" x="24" y="230" width="150" height="52" rx="7"/>
+  <text class="st" x="99" y="247" text-anchor="middle">host-webserver</text>
+  <text class="ss" x="99" y="262" text-anchor="middle">HTTP + WebSocket</text>
+  <text class="ss" x="99" y="275" text-anchor="middle">127.0.0.1 · desktop:19387</text>
+
+  <rect class="sbox" x="192" y="230" width="150" height="52" rx="7"/>
+  <text class="st" x="267" y="247" text-anchor="middle">sdk JSON-RPC server</text>
+  <text class="ss" x="267" y="262" text-anchor="middle">NDJSON · stdio</text>
+  <text class="ss" x="267" y="275" text-anchor="middle">≈ Codex app-server</text>
+
+  <rect class="sbox" x="360" y="230" width="150" height="52" rx="7"/>
+  <text class="st" x="435" y="247" text-anchor="middle">ACP server</text>
+  <text class="ss" x="435" y="262" text-anchor="middle">JSON-RPC · stdio</text>
+  <text class="ss" x="435" y="275" text-anchor="middle">Agent Client Protocol</text>
+
+  <rect class="sbox" x="528" y="230" width="130" height="52" rx="7"/>
+  <text class="st" x="593" y="247" text-anchor="middle">headless bundle</text>
+  <text class="ss" x="593" y="262" text-anchor="middle">one-shot · 无网络服务</text>
+  <text class="ss" x="593" y="275" text-anchor="middle">≈ claude -p</text>
+
+  <rect class="bar" x="28" y="298" width="624" height="28" rx="6"/>
+  <text class="bart" x="340" y="316" text-anchor="middle">runProfile() —— 唯一装配路径：profile + cordis.yml 分层 + --patch overlay（四类服务共用同一内核装配）</text>
+
+  <!-- service -> harness -->
+  <path class="arrow" d="M340 342 L340 368" marker-end="url(#arrow)"/>
+
+  <!-- ============ ③ Harness 内核 ============ -->
+  <rect class="panel" x="16" y="370" width="648" height="292" rx="10"/>
+  <text class="ptitle" x="30" y="392">③ Harness 内核 — Cordis agent 树（packages/ · @deepseek-ai/dsh-*）</text>
+
+  <rect class="gbox" x="28" y="404" width="316" height="112" rx="8"/>
+  <text class="gt" x="42" y="424">会话与编排</text>
+  <text class="gm" x="42" y="446">core（agent/session API）· boot · bundle · preset · typert</text>
+  <text class="gm" x="42" y="466">context · compaction · guard · extensions</text>
+  <text class="gm" x="42" y="486">subagent · deliverables · runtime-diagnostics · util</text>
+
+  <rect class="gbox" x="336" y="404" width="316" height="112" rx="8"/>
+  <text class="gt" x="350" y="424">工具与执行</text>
+  <text class="gm" x="350" y="446">fs · shell · terminal · subprocess · ssh · web（搜索/抓取）</text>
+  <text class="gm" x="350" y="466">browser-use · computer-use · lsp</text>
+  <text class="gm" x="350" y="486">ptc-runtime · sandbox（进程隔离 / sandbox-exec）</text>
+
+  <rect class="gbox" x="28" y="528" width="316" height="112" rx="8"/>
+  <text class="gt" x="42" y="548">生态与集成</text>
+  <text class="gm" x="42" y="570">mcp（外部工具）· skill（技能加载）</text>
+  <text class="gm" x="42" y="590">hooks（Claude Code / Codex 桥）· workflow · webhook</text>
+  <text class="gm" x="42" y="610">jobs（后台任务）· schedule · todo · plan · goal</text>
+
+  <rect class="gbox" x="336" y="528" width="316" height="112" rx="8"/>
+  <text class="gt" x="350" y="548">存储与会话数据</text>
+  <text class="gm" x="350" y="570">session（持久会话）· session-query · storage · workspace</text>
+  <text class="gm" x="350" y="590">attachment · spill · credentials（凭据/授权）</text>
+  <text class="gm" x="350" y="610">settings · identity · feedback · experimental（预研）</text>
+
+  <!-- harness -> runtime -->
+  <path class="arrow" d="M340 662 L340 686" marker-end="url(#arrow)"/>
+
+  <!-- ============ ④ 内置运行时 ============ -->
+  <rect class="panel" x="16" y="688" width="648" height="80" rx="10"/>
+  <text class="ptitle" x="30" y="710">④ 内置运行时（交付基础层 · 现状仅 desktop 供给，架构上共享可复用）</text>
+
+  <rect class="rbox" x="32" y="720" width="140" height="26" rx="6"/>
+  <text class="rt" x="102" y="737" text-anchor="middle">Node 24.21.0</text>
+  <rect class="rbox" x="188" y="720" width="140" height="26" rx="6"/>
+  <text class="rt" x="258" y="737" text-anchor="middle">CPython 3.12.14</text>
+  <rect class="rbox" x="344" y="720" width="140" height="26" rx="6"/>
+  <text class="rt" x="414" y="737" text-anchor="middle">pnpm 11 / 12</text>
+  <rect class="rbox" x="500" y="720" width="140" height="26" rx="6"/>
+  <text class="rt" x="570" y="737" text-anchor="middle">PyPI wheels（锁定）</text>
+
+  <text class="pnote" x="340" y="762" text-anchor="middle">desktop-host 的 desktopOffice 插件安装至 $DSH_HOME/dsh-runtimes/ · CLI / Web 形态使用系统 Node / Python</text>
+</svg>
