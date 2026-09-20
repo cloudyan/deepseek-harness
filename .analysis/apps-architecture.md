@@ -1,6 +1,8 @@
 # apps/ 四应用架构：cli · desktop · desktop-host · web
 
 > 源码设计分析笔记（单语维护，不承担 docs/ 的双语配对契约）。引用提交请用 tag 或 PR 链接，勿写裸 commit 哈希（repository-references 门禁）。
+>
+> 姊妹篇：[enterprise-architecture.md](enterprise-architecture.md)——企业级部署（多租户、隔离边界与分层归属）。本文回答"现在是什么"，那篇回答"要交付给一个企业、企业内部还要分人时该做什么"。
 
 ## 总览
 
@@ -46,7 +48,11 @@ Desktop session:
 
 ### IM 入口现状：无 im-gateway，最近的种子是 webhook
 
-仓库没有 im/gateway/bot/messaging 类包。最接近的是 `packages/webhook/`（webhook · webhook-github）：接收**已验证的外部 provider 事件**，按规则 fire-and-forget 地创建 DSH Session（无投递库/队列/重试/去重，也无 Agent 完成态回传）。它是"外部事件 → 会话"的单向通道，缺 IM 网关需要的**双向对话**（回复路由回消息平台、会话↔聊天线程绑定、幂等/重试）。若未来做 IM 入口，webhook 家族可承载入站事件，出站回复需要新增 provider 适配层（或经统一 app-server/SDK 面）。
+仓库没有 im/gateway/bot/messaging 类包。最接近的是 `packages/webhook/`（webhook · webhook-github）：接收**已验证的外部 provider 事件**，按规则 fire-and-forget 地创建 DSH Session（无投递库/队列/重试/去重，也无 Agent 完成态回传）。它是"外部事件 → 会话"的单向通道，缺 IM 网关需要的**双向对话**（回复路由回消息平台、会话↔聊天线程绑定、幂等/重试）。若未来做 IM 入口，webhook 家族可承载入站事件，出站回复需要新增 provider 适配层（或经统一 app-server/SDK 面）。企业级形态下的完整归属分解见 [enterprise-architecture.md §3.4](enterprise-architecture.md#34-im-管理)。
+
+### app-server 化
+
+dsh 的 app-server 化 = 把现有 sdk 能力面（turn/会话/工具/审批/文件/查询）以 latest-only 契约暴露到网络 transport，具体就是三件小事：WS/TCP transport、Typert 方法面快照导出、（可延后的）网络认证。HMR、模块表、注入、resources 这些 UI 投影机制与契约无关，永远留在自家 web UI 的同源快车道上。
 
 ## 各应用职责
 
@@ -112,6 +118,7 @@ Desktop session:
 - **无"约"**：Typert 描述符无版本字段；sdk 协议无版本协商（靠"客户端 spawn 同版本 runtime"绕开）；gateway 绑定 webserver WS + 本机 cookie 模型，不对外监听。
 - **改造评估**：机械部分小（Typert 加版本 → 握手协商 → 独立 socket + 独立认证 → descriptor 快照 CI）；结构性成本在三处——UI 投影面（模块表/injections/HMR/resources）无法轻易契约化、多版本共存运维、认证模型重设计。
 - **建议路径**：① sdk protocol 版本化 v1（面最窄收益最大，IM/远程入口立即可接）→ ② Typert 选择性冻结稳定 controller（session/workspace 优先）→ ③ UI 投影面永不承诺。渐进式获得"核心能力有稳定契约 + 富 UI 走同源快车道"的双轨。
+- **现状核对（已支持 vs 需改动）**：能力面方法（initialize/session.prompt/事件通知/图片/shutdown，`packages/sdk/server`）、传输抽象（`JsonRpcLineTransport(Readable, Writable)` 不绑 stdio，`sdk/protocol/src/transport.ts:70`）、NDJSON 分帧、profile 装配均已就绪。需改动三处：① WS/TCP 监听插件——现有 `bundle/sdk-app` 把生命周期绑死在 stdin EOF（单客户端），需新 profile（如 `bundle/sdk-net`）每连接构造 LineTransport 挂现有方法，难点是并发生命周期策略，传输类零改动；② Typert registry 已有 reflection + Zod schema，缺一个 descriptor JSON 导出命令；③ 网络认证仅非回环监听才需要。结论：不是改造协议栈，是给现有协议栈加监听壳 + 导出命令。
 - **轻量替代（latest-only 契约）**：不承诺跨版本兼容，契约 = 当版发布的方法面快照。sdk 协议已是此模式（同版本 spawn = 天然 latest-only）。底层 controller（session/workspace/fs/shell/审批）方法面稳定占比大，高频变区集中在 UI 投影面（本就不进契约）。补三件小事即可对接外部接入层：sdk jsonrpc server 增加 WS/TCP transport（现仅 stdio）、内网/本机场景可延后的网络认证、Typert → descriptor JSON 快照导出命令。性价比优于渐进版本化，版本协商/兼容承诺可待外部生态成熟后再补（Codex app-server 早期即如此演化）。**契约边界**：只暴露 harness 能力面（turn 驱动/会话/工具/审批/文件/会话查询），UI 投影机制（HMR、模块表合成、injections、resources）永不上契约、仅服务自家 web UI——此边界与 sdk 协议现有覆盖面恰好重合，故"能力面 app-server"无需新造层，复用 sdk 面换 transport 即得。
 
 ## 关键设计决策

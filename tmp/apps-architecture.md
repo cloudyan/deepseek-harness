@@ -1,6 +1,6 @@
 # apps/ 四应用架构设计：cli · desktop · desktop-host · web
 
-> 基于 deepseek-harness @ `1a0cc03105` 的源码分析。所有结论均标注源码位置，可直接核对。
+> 基于 dev_202609 分支当时的源码分析（引用提交请用 tag 或 PR 链接，勿写裸 commit 哈希）。所有结论均标注源码位置，可直接核对。
 
 ## 1. 一句话总览
 
