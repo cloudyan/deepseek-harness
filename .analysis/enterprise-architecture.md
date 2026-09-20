@@ -2,17 +2,19 @@
 
 > 源码设计分析笔记（单语维护，不承担 docs/ 的双语配对契约）。引用提交请用 tag 或 PR 链接，勿写裸 commit 哈希（repository-references 门禁）。
 >
-> 承接 [apps-architecture.md](apps-architecture.md)。那份回答"dsh 由哪些应用装配、能力面在哪、app-server 化要做什么"；这份回答"要把它交付给一个企业、企业内部还要分人时，边界切在哪一级、每项管理落在哪一层、按什么顺序做"。所有结论标注源码位置，可直接核对。
+> 承接 [apps-architecture.md](apps-architecture.md)。那份回答"dsh 由哪些应用装配、能力面在哪、app-server 化要做什么"；这份回答"要把它交付给一个企业、企业内部还要分人时，边界切在哪一级、每项管理落在哪一层、按什么顺序做"。仓库内的结论均标注源码位置，可直接核对；§1.3 引用外部产品架构时明确标注为**公开文档来源（二手资料）**，不与源码证据混列。
 
 ## 结论摘要
 
 1. **共享的层级选对了，隔离就不必拆掉管理。** 被隔离的是"执行"，管理不必跟着拆。判据只有一条：**这个事实是不是跨用户必须一致**。
 2. **单进程多用户结构性不成立**，不是工程难度问题——三条仓库自证（§1.2）。
-3. **两级边界**：企业 = 部署单元；企业内用户 = 一个容器（或至少独立 UID + 文件权限）。
-4. **管理能力分三层落**：跨用户真相 → 企业管理面；"身份变路由、策略变下发" → 控制面；只关一个人手上活儿的状态 → 他自己的 harness。
-5. **不要给 harness 内核加 owner 维度。** 每用户独立实例 + 独立存储，归属留在控制面——内核零改动，且避开 session 那条严格的代际迁移规则。
-6. **凭据必须收口**在模型网关/凭据代理，执行面只持短期凭据（§4.1）。
-7. **演化是四级台阶**（§5）：阶段 1 内核零改动，今天就能做。
+3. **外部同行给出同一结论**：云端 chat 产品（DeepSeek / Kimi / 豆包）确实是单部署多用户，但它们共享的只是**无状态的那半**；有持久工作区的云端 agent 一律切成"共享的无状态半 + 隔离的有状态半"，切点由**世界有多持久**决定（§1.3）。dsh 站在最右端，切点只能是容器。
+4. **撤工具换不来多用户**（§1.4）：工具是装配出来的插件，撤掉它们是改装配、内核零改动；但"会话 = 常驻 agent-loop + cwd + `DSH_HOME`"这一条撤不掉，而它才是单部署多用户真正的障碍。
+5. **两级边界**：企业 = 部署单元；企业内用户 = 一个容器（或至少独立 UID + 文件权限）。
+6. **管理能力分三层落**：跨用户真相 → 企业管理面；"身份变路由、策略变下发" → 控制面；只关一个人手上活儿的状态 → 他自己的 harness。
+7. **不要给 harness 内核加 owner 维度。** 每用户独立实例 + 独立存储，归属留在控制面——内核零改动，且避开 session 那条严格的代际迁移规则。
+8. **凭据必须收口**在模型网关/凭据代理，执行面只持短期凭据（§4.1）。
+9. **演化是四级台阶**（§5）：阶段 1 内核零改动，今天就能做。
 
 ---
 
@@ -49,6 +51,89 @@
 **"多进程隔离"与"执行面分租户"是假对立**：执行面分租户的实现手段本来就是进程 / 容器 / VM。真正的决策点只有两个——**边界切在企业级还是用户级**，以及**用什么承载**。
 
 配套的一条澄清：**同一 UID 下的多进程不是安全边界**。agent 的 bash 能读写该 UID 能碰到的一切文件。所以"每用户一个进程"必须同时配**独立 UID + 文件权限**，否则只是看起来隔离了。
+
+### 1.3 外部对照：云端 agent 为什么能"单部署多用户"
+
+一个自然的反驳是：DeepSeek / Kimi / 豆包 的网页版就是一个部署服务所有用户，为什么它们不需要每用户一个容器？
+
+答案是：**它们是单部署多用户，但"单部署"不等于"一个进程服务所有人"。** 它们共享的只是**无状态的那半**。决定这一点的判据只有一条：
+
+> **隔离单位由"agent 的世界有多持久"决定。**
+
+![世界持久性与隔离单位](enterprise-world-ladder.svg)
+
+这三家都落在最左档，原因是它们的 agent **不持有用户的世界**：
+
+- 会话历史跨设备同步（网页版与 App 能续聊）→ 状态只在服务端库里，**一行记录，不绑进程**；
+- 没有可 SSH 进去、跨会话存活的持久工作区；
+- code interpreter / 文件分析是一次性沙箱，用完即弃；
+- 工具面（搜索、阅读、画图）全是**服务端自有能力**，模型拿不到宿主机的 shell。
+
+于是"多用户隔离"**退化成一个数据面授权问题**——每条查询带上 `user_id` / `conversation_id`、别串号就够了。这是 web 应用几十年的老题，与 OS 级隔离不是一个难度量级。一个旁证也吻合：这类产品近两年加的 agent 模式（给任务分配工作区、跑长任务）走的仍是同一档——**给任务开沙箱，而不是让多个用户共享一个持久进程**。
+
+**这不是推断，而是行业的收敛解。** 有持久工作区的云端 agent，一律把系统切成"共享的无状态半 + 隔离的有状态半"，而且公开文档写得很直白（以下均为厂商公开文档，二手资料）：
+
+| | 共享的那半 | 隔离的那半 | 粒度 |
+|---|---|---|---|
+| **Devin**（Enterprise Cloud） | Brain —— "无状态云端服务"，其文档声明不永久存储代码库内容 | Devbox —— 完整 VM（shell / 无头浏览器 / 编辑器 / git） | **每个会话跑在自己独立的机器上** |
+| **Codex cloud** | 任务编排 + 模型服务 | "each task runs in its own cloud sandbox environment" | **每任务一个容器** |
+| **Devin Customer Dedicated** | Brain 仍在厂商云 | Devbox 进单租户 VPC | **每企业一个隔离环境** |
+
+注意 Devin 的措辞：它的产品就叫"多租户云"，但多租户的落地粒度是"**每会话一台隔离 VM**"，不是"一个进程服务所有用户"。这恰好精确回答了本节的问题——**单部署多用户是真的，"共享一个执行环境"是假的。**
+
+![共享的无状态半与隔离的有状态半](enterprise-shared-split.svg)
+
+顺带一个漂亮的印证：Codex cloud 的默认策略是"为云环境配置的密钥**只在 setup 阶段可用**、**在 agent 阶段开始前被移除**"，且"agent 阶段**默认离线**"。这与 §4.1 从仓库源码推出的"provider key 永不进入执行面、执行面只拿短期凭据"是**同一个结论**，只是用产品化语言说的。**仓库的自证与同行的产品决策独立收敛到同一条原则上**，说明这不是设计偏好，而是这类系统的必要条件。
+
+**回到 dsh。** dsh 的 session 不是一行记录：`packages/core/agent-loop/README.md` 说它负责"creates fresh agents or resumes persisted sessions, then drives each turn through model requests, streamed responses, tool execution, and durable session history"；`packages/sdk/server/README.md` 则写明服务端"The plugin creates one agent per `sessionId` on first use"。也就是说一个 session = **一个活着的 agent + 一个 `cwd` + 一个能装依赖的 shell**，而且它写的是用户的真实磁盘、跨会话存活——比云端 agent 更贴世界（Devbox 会话结束即回收，文件系统是 ephemeral）。两个硬推论：
+
+1. 想让 dsh 像 chat 产品那样"单部署多用户"，唯一的办法是**把它的世界拿掉**：工具面收归服务端、代码执行换成一次性沙箱、`cwd` 虚拟化。做完之后它不是 dsh，而是另一个产品——本质上落回最左档。
+2. 想保留能力，就只能**每用户（或每会话）一个容器**。
+
+第 2 点值得单独强调：§2 推荐的企业级形态（控制面 + 每用户执行面）**正好就是 Devin 公开的 Brain / Devbox 分离**。这不是巧合——它是"必须给 agent 持久工作区"这个约束下的收敛解。所以本文的推荐不必只靠"我们觉得合理"来撑，有同行架构背书。
+
+### 1.4 装配边界：撤掉工具能得到什么，得不到什么
+
+紧接着的一个推论常被过度外推："那把 bash、read 这些能力全撤掉，退化成纯对话的 harness，不就能多用户共享了吗？"
+
+**方向对了一半——机制不是"砍工具"，是"换工具指向的世界"；而且有一条东西撤不掉。**
+
+**第一，工具不是内核功能，是装配出来的插件。** dsh 的 `read` / `write` / `edit` / `read_image` 来自 `packages/fs/tool-fs`（逐个 `ctx.tools.register({ name: 'read' … })`），shell 能力来自 `packages/shell/tool-bash`。所以"去掉它们"不是阉割，是改一行装配，**内核零改动**。
+
+仓库里就有现成样板，而且官方 README 的措辞正是"主动排除"：
+
+| bundle | 装载的 `dsh-tool-*` |
+|---|---|
+| `dsh-base`（共享内核） | **14 个**：bash / pwsh / fs / fs-search / jobs / skill / subagent / subagent-control / workflow / todo / goal / ralph / web / call-timeout-policy |
+| `sdk-minimal` | **2 个**：`tool-bash-persistent` / `tool-pwsh-persistent`——README 写明它"**deliberately excludes** `dsh-base`, Web, settings, managed credentials, telemetry, compaction, **filesystem tools**, workspace instructions, skills, jobs, and subagents" |
+
+也就是说，"是不是 chat 产品"不是架构属性，而是**装配属性**——同一个内核，换一份 patch 就是另一个形态。
+
+**第二，云端 chat 产品不是"工具更少"，是"工具指向另一个世界"。** 它们的工具面一点都不小：联网搜索、代码解释器、文件解析、图像生成、知识库、连接器。差别在作用对象：
+
+![工具面的两档与装配事实](enterprise-tool-surface.svg)
+
+- dsh 的 `read` / `write` / `bash` 作用于**用户的世界**：真实目录、真实权限、跨会话存活、后果真实；
+- 它们的搜索 / 解释器作用于**平台自己的世界**：平台的索引、平台的一次性沙箱、用户上传的副本，产出留在平台。
+
+所以更准确的说法是：**那不是被阉割的 dsh，而是把"世界"从用户那侧搬到了平台那侧。**
+
+**第三，决定性的一刀切在 `bash`，不在 `read`。** 这不是数量问题，是**通用性**问题：
+
+- `read` / `write` / `edit` 是**封闭能力**——语义固定，能碰哪些路径可以被策略枚举；
+- `bash` 是**通用能力**——它不是一个工具，而是"能长出任何工具的工具"：给了 bash 就等于给了 python、curl、pip、git、ssh，攻击面**不可枚举**。
+
+这也解释了 `tool-bash` 为什么要配 `sandboxPolicy`、为什么有 escalation 模式、为什么被拒后还能请求更宽的模式。云端产品"保留读你上传的文件、砍掉在你的机器上跑任意命令"——**这一刀才是要害**。
+
+**第四，撤掉文件工具不等于得到隔离——仓库自己把这点写明了。** `packages/bundle/sdk-minimal/README.md` 在声明它排除了文件系统工具之后，紧接着警告："Its `danger-full-access` policy lets the shell **modify any path available to the process**, so **use it only with an isolated workspace**." 即：撤掉 `tool-fs` 之后留下的 `bash` 仍然是全权限的，官方给出的对策不是"现在安全了"，而是"**上隔离**"。这与 §1.2 完全一致——沙箱不是边界，容器才是。
+
+**第五，有一条装配撤不掉。** 即使一个 `dsh-tool-*` 都不装，session 仍然是一个活着的 agent-loop + 一个 `cwd` + 一个 `DSH_HOME`（§1.3）。而云端 chat 产品每次请求是：从库里读消息数组 → 喂模型 → 写回库，**整个过程中没有一个"属于这个用户的常驻东西在跑"**。
+
+所以最后一块拼图是：**它们能多用户共享，不只因为工具指向平台，更因为编排层把会话变成了一行数据库记录**（无状态请求 + 状态外置）。这是编排方式，不是工具面。
+
+一句话收口：
+
+> **"纯对话的 harness"靠装配就能得到**（不装 `dsh-tool-*`，内核零改动）；**但"单部署多用户"靠装配得不到**——那要先把会话从常驻进程降级成一行记录。
 
 ---
 
@@ -297,6 +382,7 @@ sdk-net 的通知是**实时扇出、不补历史**。手机切后台、浏览�
 | 每会话能力包 | ✅ 已具备 | `agent-presets` |
 | 多 provider 路由 | ✅ 已具备 | `llm.registerAdapter(providers[], adapter)` |
 | 会话日志（可回放） | ✅ 已具备 | `session-persistence-jsonl`，append-only |
+| 纯对话装配（撤掉全部 `dsh-tool-*`） | ✅ 改装配即可（内核零改动） | 样板见 `packages/bundle/sdk-minimal/cordis.patch.yml`（§1.4） |
 | 遥测与脱敏出口 | ✅ 已具备（best-effort） | `session-telemetry` / `-otel` |
 | 企业用户目录 / principal | ❌ 完全没有 | 需企业层自建（对接 IdP） |
 | 认证 → 路由（控制面） | ❌ 没有 | 需新建；可复用 `host/webserver` 做载体 |
@@ -308,6 +394,7 @@ sdk-net 的通知是**实时扇出、不补历史**。手机切后台、浏览�
 | 配额与计费 | ❌ 没有 | 需新建；凭据按 scope 存，须自行加 principal 维度 |
 | 断线续读 | ❌ 没有 | 需内核补一个按 offset 续读的接口 |
 | 沙箱作为安全边界 | ❌ 不成立（设计如此） | 由容器/microVM 承担 |
+| 会话无状态化（降级为一行记录） | ❌ 不成立（会话是常驻 agent-loop + cwd） | `packages/core/agent-loop`；见 §1.3、§1.4 |
 
 ---
 
@@ -331,6 +418,8 @@ sdk-net 的通知是**实时扇出、不补历史**。手机切后台、浏览�
 3. **`webhook` 的规则模型是否足以承载 IM 出站**：入站侧的验签 + 快速 ack 形态是对的，但出站回复、线程绑定、重试队列都没有，需要新造；新造应放在控制面还是作为独立 bundle，未定。
 4. **`shell-env` 的 `DSH_*` 事实集**：本文只确认了 `DSH_HOME` / `DSH_SHELL` / `DSH_SESSION_ID` 三项内置，其余插件注册项未穷举；企业级下发凭据时需确认没有别的 `DSH_*` 会泄漏敏感值。
 5. **多用户共享一台机器的资源争抢**：容器密度、CPU/内存/磁盘配额、并发模型调用的连接数，均未评估。
+6. **外部同行资料的深度（§1.3）**：Devin / Codex cloud 的结论来自厂商公开文档与官方博客，属**二手资料**，只核到"每会话 / 每任务一个隔离环境"这一层；其会话索引、凭据代理的内部实现细节未取得。作为"方向印证"足够，作为"可以照着抄的规格"不够。
+7. **"会话降级为一行记录"的改造量（§1.4）**：本文指出它是单部署多用户真正的前置条件，但把 `agent-loop` 的常驻模型改成"每请求从存储重建"需要多大改动、会失去什么（常驻 shell 的跨调用状态、后台 job、PTY 会话），未评估。
 
 ---
 
@@ -364,3 +453,8 @@ sdk-net 的通知是**实时扇出、不补历史**。手机切后台、浏览�
 | profile 级插件管理 | `packages/boot/plugin-manager/README.md` |
 | 会话格式代际规则 | `AGENTS.md` |
 | 网络能力面（本文的执行面载体） | `packages/bundle/sdk-net`、`packages/sdk/server`、`packages/sdk/protocol` |
+| 工具面装配样板（§1.4） | `packages/bundle/base/cordis.patch.yml`（14 个 `dsh-tool-*`）、`packages/bundle/sdk-minimal/cordis.patch.yml`（2 个，README 声明 excludes filesystem tools） |
+| 文件工具注册 | `packages/fs/tool-fs/src/read.ts`、`write.ts`、`edit.ts`、`read-image.ts` |
+| shell 工具注册 | `packages/shell/tool-bash/src/index.ts`、`packages/shell/tool-pwsh/src/index.ts`，及两个 `-persistent` 变体 |
+| 会话的常驻语义（§1.3） | `packages/core/agent-loop/README.md`、`packages/sdk/server/README.md` |
+| 外部对照资料（公开文档，二手） | Devin Enterprise Cloud（Brain / Devbox 分离、每会话独立机器）、Devin Customer Dedicated（企业单租户环境）、Codex cloud（每任务一个沙箱；密钥在 agent 阶段前移除、agent 阶段默认离线） |

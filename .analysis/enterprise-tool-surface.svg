@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 410" font-family="-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">
+  <style>
+    .closed { fill: #EAF3DE; stroke: #97C459; stroke-width: 1; }
+    .open { fill: #FAEEDA; stroke: #FAC775; stroke-width: 1; }
+    .fact { fill: #F1EFE8; stroke: #D3D1C7; stroke-width: 1; }
+    .tc { font-size: 12px; font-weight: 700; fill: #27500A; }
+    .dc { font-size: 11px; fill: #3B6D11; }
+    .to { font-size: 12px; font-weight: 700; fill: #633806; }
+    .do { font-size: 11px; fill: #854F0B; }
+    .tf { font-size: 11.5px; font-weight: 700; fill: #444441; }
+    .df { font-size: 11px; fill: #5F5D57; }
+    .note { font-size: 11.5px; fill: #3D3B36; }
+  </style>
+
+  <rect class="closed" x="40" y="48" width="290" height="176" rx="10"/>
+  <text class="tc" x="56" y="74">封闭能力 · 可枚举</text>
+  <text class="dc" x="56" y="102">read · write · edit · read_image</text>
+  <text class="dc" x="56" y="122">fs-search · web · todo · workflow</text>
+  <text class="dc" x="56" y="152">语义固定；能碰哪些路径</text>
+  <text class="dc" x="56" y="170">可被策略枚举</text>
+  <text class="dc" x="56" y="198">撤掉它 → 能力面缩小</text>
+
+  <rect class="open" x="350" y="48" width="290" height="176" rx="10"/>
+  <text class="to" x="366" y="74">通用能力 · 不可枚举</text>
+  <text class="do" x="366" y="102">bash · pwsh（persistent 变体）</text>
+  <text class="do" x="366" y="130">「能长出任何工具的工具」：</text>
+  <text class="do" x="366" y="150">python · curl · pip · git · ssh …</text>
+  <text class="do" x="366" y="198">撤掉它才是有意义的那一刀</text>
+
+  <rect class="fact" x="40" y="240" width="600" height="76" rx="8"/>
+  <text class="tf" x="56" y="264">装配事实：撤工具 = 改装配，内核零改动</text>
+  <text class="df" x="56" y="288">dsh-base：14 个 dsh-tool-*</text>
+  <text class="df" x="56" y="306">含 tool-fs（read / write / edit）+ tool-bash</text>
+  <text class="df" x="348" y="288">sdk-minimal：2 个</text>
+  <text class="df" x="348" y="306">bash / pwsh persistent，无文件工具</text>
+
+  <text class="note" x="40" y="346">但装配撤不掉「会话 = 常驻 agent-loop + cwd + DSH_HOME」—— 那要改编排，不是改工具面</text>
+  <text class="note" x="40" y="372">官方对 sdk-minimal 的告示：danger-full-access 让 shell 能改进程可碰的任何路径，</text>
+  <text class="note" x="40" y="390">「只在隔离工作区里使用」—— 撤掉文件工具不等于得到隔离。</text>
+</svg>

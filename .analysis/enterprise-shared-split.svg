@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 348" font-family="-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">
+  <style>
+    .shared { fill: #E1F5EE; stroke: #5DCAA5; stroke-width: 1; }
+    .chip { fill: #FFFFFF; stroke: #9AD9C3; stroke-width: 1; }
+    .sess { fill: #EAF3DE; stroke: #97C459; stroke-width: 1; }
+    .ts { font-size: 12px; font-weight: 700; fill: #085041; }
+    .cs { font-size: 11px; fill: #0F6E56; }
+    .ns { font-size: 11.5px; fill: #0F6E56; }
+    .t2 { font-size: 11.5px; font-weight: 600; fill: #27500A; }
+    .d2 { font-size: 11px; fill: #3B6D11; }
+    .fence { font-size: 11px; font-weight: 600; fill: #6B6963; }
+    .flow { font-size: 11px; fill: #5F5D57; }
+    .note { font-size: 11.5px; fill: #3D3B36; }
+  </style>
+
+  <rect class="shared" x="40" y="56" width="600" height="96" rx="10"/>
+  <text class="ts" x="56" y="80">共享层 · 无状态（一个部署一份）</text>
+
+  <rect class="chip" x="56" y="90" width="134" height="30" rx="6"/>
+  <text class="cs" x="123" y="109" text-anchor="middle">任务编排</text>
+  <rect class="chip" x="200" y="90" width="134" height="30" rx="6"/>
+  <text class="cs" x="267" y="109" text-anchor="middle">模型服务</text>
+  <rect class="chip" x="344" y="90" width="134" height="30" rx="6"/>
+  <text class="cs" x="411" y="109" text-anchor="middle">会话历史库</text>
+  <rect class="chip" x="488" y="90" width="134" height="30" rx="6"/>
+  <text class="cs" x="555" y="109" text-anchor="middle">密钥（只在这里）</text>
+
+  <text class="ns" x="56" y="141">密钥在 agent 阶段开始前被移除，agent 阶段默认离线</text>
+
+  <line x1="40" y1="174" x2="640" y2="174" stroke="#C9C6BC" stroke-width="1" stroke-dasharray="5 4"/>
+  <text class="fence" x="340" y="168" text-anchor="middle">隔离边界 · 每会话一份机器</text>
+  <text class="flow" x="40" y="192">↓ 下发：身份 + 短期凭据</text>
+  <text class="flow" x="640" y="192" text-anchor="end">↑ 回传：事件与结果</text>
+
+  <rect class="sess" x="40" y="202" width="190" height="84" rx="8"/>
+  <text class="t2" x="56" y="228">会话 A（用户 A）</text>
+  <text class="d2" x="56" y="250">独立容器 / VM</text>
+  <text class="d2" x="56" y="270">工作区 · shell · git · 浏览器</text>
+
+  <rect class="sess" x="245" y="202" width="190" height="84" rx="8"/>
+  <text class="t2" x="261" y="228">会话 B（用户 B）</text>
+  <text class="d2" x="261" y="250">独立容器 / VM</text>
+  <text class="d2" x="261" y="270">工作区 · shell · git · 浏览器</text>
+
+  <rect class="sess" x="450" y="202" width="190" height="84" rx="8"/>
+  <text class="t2" x="466" y="228">会话 C（用户 C）</text>
+  <text class="d2" x="466" y="250">独立容器 / VM</text>
+  <text class="d2" x="466" y="270">工作区 · shell · git · 浏览器</text>
+
+  <text class="note" x="40" y="318">共享的无状态半 + 隔离的有状态半 —— 这就是 §2 的推荐形态（Devin 称其为 Brain / Devbox）</text>
+</svg>
