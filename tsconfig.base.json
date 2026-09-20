@@ -155,6 +155,7 @@
       "@deepseek-ai/dsh-host-*/invariant": ["./packages/host/*/src/invariant.ts"],
       "@deepseek-ai/dsh-client-*/invariant": ["./packages/client/*/src/invariant.ts"],
       "@deepseek-ai/dsh-headless/startup": ["./packages/bundle/headless/src/startup.ts"],
+      "@deepseek-ai/dsh-sdk-net/startup": ["./packages/bundle/sdk-net/src/startup.ts"],
       "@deepseek-ai/dsh-web-app/startup": ["./packages/bundle/web-app/src/startup.ts"],
       "@deepseek-ai/dsh-client-*/client": ["./packages/client/*/src/client"],
       // One wildcard maps every @deepseek-ai/dsh-<name> to its source. Package
@@ -392,6 +393,7 @@
       "@deepseek-ai/dsh-scope": ["./packages/core/scope/src"],
       "@deepseek-ai/dsh-sdk-app": ["./packages/bundle/sdk-app/src"],
       "@deepseek-ai/dsh-sdk-minimal": ["./packages/bundle/sdk-minimal/src"],
+      "@deepseek-ai/dsh-sdk-net": ["./packages/bundle/sdk-net/src"],
       "@deepseek-ai/dsh-session": ["./packages/core/session/src"],
       "@deepseek-ai/dsh-session-checkpoint-policy": ["./packages/session/session-checkpoint-policy/src"],
       "@deepseek-ai/dsh-session-format": ["./packages/session/session-format/src"],

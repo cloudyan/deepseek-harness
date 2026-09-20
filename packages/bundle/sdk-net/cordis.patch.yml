@@ -1,0 +1,35 @@
+# The SDK network application over dsh-base: a TCP NDJSON JSON-RPC listener
+# beside the stdio SDK profile. Stdin and stdout stay free for diagnostics, and
+# the listener row's readiness is the bound socket rather than stdin EOF.
+#
+# The flag provider injects `cmdlineArgs` and provides `sdkNetStartup` as an
+# ordinary Cordis service. The listener row injects that service, so Loader
+# resolves its expressions only after it exists, and a flag beats the value
+# written beside it. `dsh --profile sdk-net --help` provides no service, so
+# this profile never opens a port without an accepted invocation.
+
+- id: system-prompt
+  config:
+    personaSuffix: Your working directory is {{cwd}}.
+    personaPrefix: >-
+      You are a coding agent powered by the {{model}} model.
+
+- id: session-title-llm
+  disabled: true
+
+- insert:
+    - id: sdk-net-startup
+      name: '@deepseek-ai/dsh-sdk-net/startup'
+
+    - id: sdk-net
+      name: '@deepseek-ai/dsh-sdk-net'
+      inject: [sdkNetStartup]
+      config:
+        host: !!js ctx.sdkNetStartup.host ?? '127.0.0.1'
+        port: !!js ctx.sdkNetStartup.port ?? 19391
+        maxConnections: !!js ctx.sdkNetStartup.maxConnections ?? 8
+        descriptorSnapshotPath: !!js ctx.sdkNetStartup.descriptorSnapshotPath
+        maxTokensAsSuccess: !!js "process.env.DSH_MAX_TOKENS_AS_SUCCESS === undefined ? true : JSON.parse(process.env.DSH_MAX_TOKENS_AS_SUCCESS)"
+
+- id: hmr
+  disabled: true

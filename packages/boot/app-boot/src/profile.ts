@@ -145,6 +145,9 @@ export const PROFILE_TEMPLATES: Record<string, ProfileTemplate> = {
   sdk: {
     bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-sdk-app'],
   },
+  'sdk-net': {
+    bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-sdk-net'],
+  },
   'sdk-minimal': {
     bundles: ['@deepseek-ai/dsh-sdk-minimal'],
   },

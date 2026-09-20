@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This group maps the installable patch layers used by `dsh --profile`. Each package declares `dsh.bundle.patch`; the launcher stacks those patch documents to assemble a named profile. The `web`, `headless`, `acp`, and `sdk` profiles build on `dsh-base`, while `sdk-minimal` supplies its complete tree in one bundle. Domain packages can declare additional layers outside this directory.
+This group maps the installable patch layers used by `dsh --profile`. Each package declares `dsh.bundle.patch`; the launcher stacks those patch documents to assemble a named profile. The `web`, `headless`, `acp`, `sdk`, and `sdk-net` profiles build on `dsh-base`, while `sdk-minimal` supplies its complete tree in one bundle. Domain packages can declare additional layers outside this directory.
 
 ## Table of Contents
 
@@ -27,6 +27,7 @@ This group maps the installable patch layers used by `dsh --profile`. Each packa
 | [`web-app`](web-app/README.md) | Browser application layer over base | mounts Web rows |
 | [`headless`](headless/README.md) | One-shot command-line task application over base | `headless-runner` |
 | [`sdk-app`](sdk-app/README.md) | SDK JSON-RPC stdio application over base | mounts the SDK server |
+| [`sdk-net`](sdk-net/README.md) | SDK JSON-RPC network application over base | mounts the SDK listener |
 | [`sdk-minimal`](sdk-minimal/README.md) | Standalone minimal SDK application without base or Web | — (complete patch tree) |
 
 In-box bundles resolve from the dsh installation; out-of-tree bundles install into a profile through `dsh plugin --profile <name> add <package>`.
