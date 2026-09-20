@@ -60,6 +60,8 @@ Desktop session:
 ### apps/web（`@deepseek-ai/dsh-web-frontend`，唯一前端 UI）
 
 - Vite 应用，构建产物 `dist/`；UI 内核是 `packages/client/web`，组件库在 `packages/client/ui-*`。
+- **刻意做薄的壳**：源码仅 4 个文件（`src/main.ts` 等）+ `index.html` + `vite.config.ts`，其余为 tests/（数十个 e2e）。`main.ts` 只做两件事：`new AppWebEntry(el)` 挂载 `#root`；desktop 模式下等待 `dshDesktopBoot.ready()` 注入后再引导（`applyIndexInjections`）。
+- **UI 真正的实现是 `packages/client/` 的客户端插件树（约 50 包）**：`dsh-client-web` 是引导内核（静态模块表 + Cordis loader + UI-renderer 交接）；`dsh-client-modules` 的浏览器侧是 lazy-CJS 模块表，由 vendored Cordis Loader 消费——**web UI 本身也是一棵 Cordis 插件树**，与后端 agent 同一套组合机制；40+ 个 `ui-*` 功能包（ui-chat、ui-conversation、ui-dockkit 停靠布局、ui-tool/ui-trajectory、ui-approval、ui-settings-* 族、ui-sidebar-* 族）经 `ui-slots` 插槽注册、`ui-renderer` 渲染。
 - 自身不提供服务，`dist/` 被两个宿主复用：CLI 的 `dsh web` 与 Electron 桌面壳。
 - 注意 `packages/web/web`（`@deepseek-ai/dsh-web`）是网页搜索/抓取能力包，与此 UI 无关。
 
@@ -97,6 +99,20 @@ Desktop session:
 - 交互式终端 REPL/TUI 不存在：`apps/cli` 定位是启动器，无 readline/ink 类 TUI 依赖；`packages/terminal` 是 agent 侧的持久终端工具，不是 UI。
 - 最接近的形态是 one-shot：`dsh --profile headless "task"`（约等于 `claude -p`），单任务、无 GUI、可 `--json` 编程消费、可 `--session-id` 恢复对话；会话存储共享，之后可在 web/桌面继续。
 - 需要交互式体验时走 `dsh web`（浏览器）或桌面应用；程序化驱动选 `sdk` profile（TS/Python SDK）或 `acp` profile（编辑器集成）。
+
+### UI 与内核的耦合度：对比 Codex 的 app-server 模式
+
+- **Codex 模式**（协议分层）：内核 + 版本化 app-server（JSON-RPC stdio）作为稳定接缝，TUI/IDE 是独立代码库的客户端，UI 可替换、第三方可依协议自建。
+- **dsh 现状**（同源组合）：存在功能等价的 Remote 层——`packages/api/`（session/workspace/terminal/settings controller，类型化方法调用经共享 Connection/gateway 传输）——但它是 **monorepo 编译期契约**（两端共享类型、同版发布、无版本协商），对外不是稳定协议。更深的耦合在于：host 不只响应 API，还**组装并投递 UI 本身**（模块表 node 半侧合成、`collectIndexInjections` 注入、HMR 通道、resources 活值），client 是同一棵 Cordis 树上的插件——两端是一个分布式程序，而非两台经协议对话的独立程序。
+- **结论**：UI 事实上不可替换；第三方 UI 只能退到 sdk/ACP stdio 协议（较窄，无 UI 投影）。这与 IM/远程/移动端入口缺位同根。若要支持外部 UI/IM，演进路径是把 `packages/api` + Connection 协议冻结为版本化契约（app-server 化）。
+
+#### app-server 化的可行性评估
+
+- **有"形"**：`packages/typert/` 已把 Remote 方法面生成为稳定元数据（全局稳定 id、wire namespace、参数 codec、Zod schema），`api/gateway` dispatch 跑在其上——形态与 gRPC proto 同构，是现成 IDL；`sdk/protocol` 是唯一跨语言的 JSON-RPC 面；gateway 线上格式（JSON envelope + 错误码 + WS 流复用）健全。
+- **无"约"**：Typert 描述符无版本字段；sdk 协议无版本协商（靠"客户端 spawn 同版本 runtime"绕开）；gateway 绑定 webserver WS + 本机 cookie 模型，不对外监听。
+- **改造评估**：机械部分小（Typert 加版本 → 握手协商 → 独立 socket + 独立认证 → descriptor 快照 CI）；结构性成本在三处——UI 投影面（模块表/injections/HMR/resources）无法轻易契约化、多版本共存运维、认证模型重设计。
+- **建议路径**：① sdk protocol 版本化 v1（面最窄收益最大，IM/远程入口立即可接）→ ② Typert 选择性冻结稳定 controller（session/workspace 优先）→ ③ UI 投影面永不承诺。渐进式获得"核心能力有稳定契约 + 富 UI 走同源快车道"的双轨。
+- **轻量替代（latest-only 契约）**：不承诺跨版本兼容，契约 = 当版发布的方法面快照。sdk 协议已是此模式（同版本 spawn = 天然 latest-only）。底层 controller（session/workspace/fs/shell/审批）方法面稳定占比大，高频变区集中在 UI 投影面（本就不进契约）。补三件小事即可对接外部接入层：sdk jsonrpc server 增加 WS/TCP transport（现仅 stdio）、内网/本机场景可延后的网络认证、Typert → descriptor JSON 快照导出命令。性价比优于渐进版本化，版本协商/兼容承诺可待外部生态成熟后再补（Codex app-server 早期即如此演化）。**契约边界**：只暴露 harness 能力面（turn 驱动/会话/工具/审批/文件/会话查询），UI 投影机制（HMR、模块表合成、injections、resources）永不上契约、仅服务自家 web UI——此边界与 sdk 协议现有覆盖面恰好重合，故"能力面 app-server"无需新造层，复用 sdk 面换 transport 即得。
 
 ## 关键设计决策
 
