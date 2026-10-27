@@ -1,0 +1,101 @@
+<svg viewBox="0 0 680 660" width="100%" role="img" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'PingFang SC', sans-serif">
+  <title>apps 四应用架构关系</title>
+  <desc>cli 与 desktop 两个入口各自调用同一条 runProfile() 装配 Cordis 内核，UI 复用 apps/web dist；主进程与 host 之间是生命周期 IPC 控制面</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <style>
+    .th { font-size: 13px; font-weight: 500; fill: #2C2C2A; }
+    .ts { font-size: 12px; fill: #5F5E5A; }
+  </style>
+
+  <text x="40" y="30" font-size="14" font-weight="500" fill="#2C2C2A">两种会话形态，一套内核</text>
+  <text class="ts" x="40" y="48">左：web 会话（终端手动启动）　　右：桌面会话（Electron 自动拉起 host）</text>
+
+  <g>
+    <rect x="40" y="66" width="180" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+    <text class="th" x="130" y="88" text-anchor="middle" dominant-baseline="central">apps/cli（dsh）</text>
+    <text class="ts" x="130" y="106" text-anchor="middle" dominant-baseline="central">统一启动器</text>
+  </g>
+  <g>
+    <rect x="440" y="66" width="200" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+    <text class="th" x="540" y="88" text-anchor="middle" dominant-baseline="central">apps/desktop</text>
+    <text class="ts" x="540" y="106" text-anchor="middle" dominant-baseline="central">Electron 安全壳</text>
+  </g>
+
+  <path d="M130 122 L130 170" fill="none" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="ts" x="140" y="150" dominant-baseline="central">进程内启动（dsh web）</text>
+
+  <path d="M540 122 L540 170" fill="none" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="ts" x="410" y="140" dominant-baseline="central">spawn 子进程</text>
+  <text class="ts" x="410" y="156" dominant-baseline="central">ELECTRON_RUN_AS_NODE</text>
+
+  <g>
+    <rect x="40" y="170" width="180" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+    <text class="th" x="130" y="192" text-anchor="middle" dominant-baseline="central">dsh web 进程（本机）</text>
+    <text class="ts" x="130" y="210" text-anchor="middle" dominant-baseline="central">webserver + agent</text>
+  </g>
+  <g>
+    <rect x="440" y="170" width="200" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+    <text class="th" x="540" y="192" text-anchor="middle" dominant-baseline="central">apps/desktop-host</text>
+    <text class="ts" x="540" y="210" text-anchor="middle" dominant-baseline="central">webserver :19387 + agent</text>
+  </g>
+
+  <path d="M220 198 L440 198" fill="none" stroke="#534AB7" stroke-width="1" stroke-dasharray="5 3" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+  <text class="ts" x="330" y="190" text-anchor="middle" dominant-baseline="central" fill="#534AB7">同一条 runProfile()</text>
+
+  <g>
+    <rect x="40" y="266" width="180" height="56" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+    <text class="th" x="130" y="288" text-anchor="middle" dominant-baseline="central">浏览器</text>
+    <text class="ts" x="130" y="306" text-anchor="middle" dominant-baseline="central">HTTP / WS 直连</text>
+  </g>
+  <g>
+    <rect x="440" y="266" width="200" height="56" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+    <text class="th" x="540" y="288" text-anchor="middle" dominant-baseline="central">renderer（沙箱）</text>
+    <text class="ts" x="540" y="306" text-anchor="middle" dominant-baseline="central">无 Node / 文件系统能力</text>
+  </g>
+
+  <path d="M130 226 L130 266" fill="none" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="ts" x="140" y="250" dominant-baseline="central">静态 dist + /api</text>
+
+  <path d="M540 122 L540 266" fill="none" stroke="#854F0B" stroke-width="1" transform="translate(85 0)" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+  <text class="ts" x="648" y="200" dominant-baseline="central" text-anchor="middle" transform="rotate(90 648 200)">dsh-app://app ＝ apps/web dist</text>
+
+  <path d="M640 294 L660 294 L660 224 L646 224" fill="none" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="ts" x="652" y="262" dominant-baseline="central" text-anchor="middle" transform="rotate(90 652 262)">/api 认证转发</text>
+
+  <g>
+    <rect x="240" y="342" width="200" height="52" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+    <text class="th" x="340" y="362" text-anchor="middle" dominant-baseline="central">apps/web dist（唯一 UI）</text>
+    <text class="ts" x="340" y="380" text-anchor="middle" dominant-baseline="central">两个宿主复用</text>
+  </g>
+  <path d="M130 322 L130 342 L240 342" fill="none" stroke="#5F5E5A" stroke-width="1" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+  <path d="M540 322 L540 342 L440 342" fill="none" stroke="#5F5E5A" stroke-width="1" stroke-dasharray="5 3" marker-end="url(#arrow)"/>
+  <text class="ts" x="152" y="338" dominant-baseline="central">host-webserver 托管</text>
+  <text class="ts" x="518" y="338" dominant-baseline="central" text-anchor="end">经协议注入</text>
+
+  <g>
+    <rect x="40" y="428" width="600" height="72" rx="12" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+    <text class="th" x="340" y="454" text-anchor="middle" dominant-baseline="central">共用内核（packages/）——由 runProfile() 装配</text>
+    <text class="ts" x="340" y="476" text-anchor="middle" dominant-baseline="central">app-boot（profile 装配） · host-webserver · agent · tools · skills · session</text>
+  </g>
+
+  <path d="M560 122 L560 170" fill="none" stroke="#3B6D11" stroke-width="1" stroke-dasharray="5 3" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+
+  <g>
+    <rect x="40" y="532" width="288" height="56" rx="8" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.5"/>
+    <text class="th" x="184" y="554" text-anchor="middle" dominant-baseline="central">生命周期 IPC 控制面</text>
+    <text class="ts" x="184" y="572" text-anchor="middle" dominant-baseline="central">ready · fatal · shutdown · update-tasks</text>
+  </g>
+
+  <g>
+    <rect x="352" y="532" width="288" height="56" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+    <text class="th" x="496" y="554" text-anchor="middle" dominant-baseline="central">primary-runtime（哈希锁定）</text>
+    <text class="ts" x="496" y="572" text-anchor="middle" dominant-baseline="central">CPython · Node · pnpm → desktop-host 消费</text>
+  </g>
+
+  <text class="ts" x="340" y="620" text-anchor="middle">服务面协议：HTTP+WS（UI） · JSON-RPC stdio（SDK / ACP） · one-shot（headless）</text>
+  <text class="ts" x="340" y="644" text-anchor="middle" fill="#888780">deepseek-harness · apps/ 架构关系图</text>
+</svg>

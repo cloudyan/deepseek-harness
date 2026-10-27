@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 436" font-family="-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">
+  <style>
+    .r0 { fill: #F1EFE8; stroke: #ADABA4; stroke-width: 1; }
+    .r1 { fill: #E6F1FB; stroke: #85B7EB; stroke-width: 1; }
+    .r2 { fill: #B5D4F4; stroke: #378ADD; stroke-width: 1; }
+    .r3 { fill: #EEEDFE; stroke: #7F77DD; stroke-width: 1; }
+    .c0 { fill: #FFFFFF; stroke: #ADABA4; stroke-width: 1; }
+    .c1 { fill: #FFFFFF; stroke: #85B7EB; stroke-width: 1; }
+    .c2 { fill: #FFFFFF; stroke: #378ADD; stroke-width: 1; }
+    .c3 { fill: #FFFFFF; stroke: #7F77DD; stroke-width: 1; }
+    .n0 { font-size: 12px; font-weight: 700; fill: #5F5E5A; }
+    .n1 { font-size: 12px; font-weight: 700; fill: #185FA5; }
+    .n2 { font-size: 12px; font-weight: 700; fill: #0C447C; }
+    .n3 { font-size: 12px; font-weight: 700; fill: #534AB7; }
+    .t0 { font-size: 12.5px; font-weight: 700; fill: #2C2C2A; }
+    .t1 { font-size: 12.5px; font-weight: 700; fill: #0C447C; }
+    .t2 { font-size: 12.5px; font-weight: 700; fill: #042C53; }
+    .t3 { font-size: 12.5px; font-weight: 700; fill: #26215C; }
+    .l0 { font-size: 11px; fill: #5F5E5A; }
+    .l1 { font-size: 11px; fill: #3D5C7A; }
+    .l2 { font-size: 11px; fill: #1E4E82; }
+    .l3 { font-size: 11px; fill: #55307A; }
+    .g0 { font-size: 11px; fill: #8A8880; }
+    .g1 { font-size: 11px; fill: #6B8CAE; }
+    .g2 { font-size: 11px; fill: #2F6BAE; }
+    .g3 { font-size: 11px; fill: #7A4FA3; }
+    .badge { font-size: 10.5px; font-weight: 700; }
+  </style>
+
+  <rect class="r0" x="40" y="40" width="600" height="82" rx="10"/>
+  <circle class="c0" cx="68" cy="81" r="14"/>
+  <text class="n0" x="68" y="85" text-anchor="middle">0</text>
+  <text class="t0" x="96" y="66">阶段 0 · 现状</text>
+  <text class="badge g0" x="620" y="66" text-anchor="end">已落地</text>
+  <text class="l0" x="96" y="88">单实例 sdk-net：一个运行时一个身份，进程级身份守卫</text>
+  <text class="g0" x="96" y="106">内核改动量：无</text>
+
+  <rect class="r1" x="40" y="138" width="600" height="82" rx="10"/>
+  <circle class="c1" cx="68" cy="179" r="14"/>
+  <text class="n1" x="68" y="183" text-anchor="middle">1</text>
+  <text class="t1" x="96" y="164">阶段 1 · 每用户一容器</text>
+  <text class="badge g1" x="620" y="164" text-anchor="end">零改动</text>
+  <text class="l1" x="96" y="186">独立 DSH_HOME + 独立 cwd 卷；控制面只负责启动与路由</text>
+  <text class="g1" x="96" y="204">内核改动量：无 —— 纯部署形态变化</text>
+
+  <rect class="r2" x="40" y="236" width="600" height="82" rx="10"/>
+  <circle class="c2" cx="68" cy="277" r="14"/>
+  <text class="n2" x="68" y="281" text-anchor="middle">2</text>
+  <text class="t2" x="96" y="262">阶段 2 · 企业控制面</text>
+  <text class="badge g2" x="620" y="262" text-anchor="end">小</text>
+  <text class="l2" x="96" y="284">认证 / 路由 / 会话索引 + 模型网关 + IM 网关；凭据收口</text>
+  <text class="g2" x="96" y="302">内核改动量：小 —— 下发短期凭据、开放会话日志采集口</text>
+
+  <rect class="r3" x="40" y="334" width="600" height="82" rx="10"/>
+  <circle class="c3" cx="68" cy="375" r="14"/>
+  <text class="n3" x="68" y="379" text-anchor="middle">3</text>
+  <text class="t3" x="96" y="360">阶段 3 · 企业级增强</text>
+  <text class="badge g3" x="620" y="360" text-anchor="end">中</text>
+  <text class="l3" x="96" y="382">配额与计费、策略下发、断线续读、合规留存与导出</text>
+  <text class="g3" x="96" y="400">内核改动量：中 —— 仅续读接口在内核，其余全在企业层</text>
+</svg>

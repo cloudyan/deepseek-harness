@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 396" font-family="-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">
+  <style>
+    .step1 { fill: #FCEBEB; stroke: #F09595; stroke-width: 1; }
+    .step3 { fill: #FAEEDA; stroke: #FAC775; stroke-width: 1; }
+    .step4 { fill: #EAF3DE; stroke: #97C459; stroke-width: 1; }
+    .step5 { fill: #E1F5EE; stroke: #5DCAA5; stroke-width: 1; }
+    .h { font-size: 11px; font-weight: 700; fill: #6B6963; }
+    .w1 { font-size: 11.5px; font-weight: 600; fill: #791F1F; }
+    .d1 { font-size: 11px; fill: #A32D2D; }
+    .w3 { font-size: 11.5px; font-weight: 600; fill: #633806; }
+    .d3 { font-size: 11px; fill: #854F0B; }
+    .w4 { font-size: 11.5px; font-weight: 600; fill: #27500A; }
+    .d4 { font-size: 11px; fill: #3B6D11; }
+    .w5 { font-size: 11.5px; font-weight: 600; fill: #085041; }
+    .d5 { font-size: 11px; fill: #0F6E56; }
+    .note { font-size: 11.5px; fill: #3D3B36; }
+  </style>
+
+  <text class="h" x="58" y="52">承载方式</text>
+  <text class="h" x="200" y="52">是否真边界</text>
+  <text class="h" x="310" y="52">隔离机制</text>
+  <text class="h" x="470" y="52">适用场景</text>
+
+  <rect class="step1" x="40" y="60" width="600" height="52" rx="8"/>
+  <text class="w1" x="58" y="90">同进程多用户</text>
+  <text class="d1" x="200" y="90">✗ 不成立</text>
+  <text class="d1" x="310" y="90">逻辑隔离无硬边界</text>
+  <text class="d1" x="470" y="90">排除，不讨论</text>
+
+  <rect class="step1" x="40" y="120" width="600" height="52" rx="8"/>
+  <text class="w1" x="58" y="150">同 UID 多进程</text>
+  <text class="d1" x="200" y="150">✗ 形似实非</text>
+  <text class="d1" x="310" y="150">bash 可读写该 UID 一切</text>
+  <text class="d1" x="470" y="150">仅可信同事</text>
+
+  <rect class="step3" x="40" y="180" width="600" height="52" rx="8"/>
+  <text class="w3" x="58" y="210">独立 UID 多进程</text>
+  <text class="d3" x="200" y="210">△ 部分</text>
+  <text class="d3" x="310" y="210">POSIX 文件权限</text>
+  <text class="d3" x="470" y="210">内部小团队</text>
+
+  <rect class="step4" x="40" y="240" width="600" height="52" rx="8"/>
+  <text class="w4" x="58" y="270">每用户容器</text>
+  <text class="d4" x="200" y="270">✓ 强</text>
+  <text class="d4" x="310" y="270">命名空间 + 独立根</text>
+  <text class="d4" x="470" y="270">企业内多用户推荐</text>
+
+  <rect class="step5" x="40" y="300" width="600" height="52" rx="8"/>
+  <text class="w5" x="58" y="330">每用户 microVM</text>
+  <text class="d5" x="200" y="330">✓ 最强</text>
+  <text class="d5" x="310" y="330">独立内核</text>
+  <text class="d5" x="470" y="330">高合规 · 不可信输入</text>
+
+  <text class="note" x="40" y="376">判据：agent 会不会处理不可信输入 —— 会则容器起步，只有可信同事才可退到独立 UID 一档</text>
+</svg>

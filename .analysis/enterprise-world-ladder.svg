@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 364" font-family="-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">
+  <style>
+    .r1 { fill: #F4F2EC; stroke: #D9D6CC; stroke-width: 1; }
+    .r2 { fill: #FAEEDA; stroke: #FAC775; stroke-width: 1; }
+    .r3 { fill: #EAF3DE; stroke: #97C459; stroke-width: 1; }
+    .r4 { fill: #E1F5EE; stroke: #5DCAA5; stroke-width: 1; }
+    .h { font-size: 11px; font-weight: 700; fill: #6B6963; }
+    .n1 { font-size: 11.5px; font-weight: 600; fill: #444441; }
+    .m1 { font-size: 11px; fill: #5F5D57; }
+    .n2 { font-size: 11.5px; font-weight: 600; fill: #633806; }
+    .m2 { font-size: 11px; fill: #854F0B; }
+    .n3 { font-size: 11.5px; font-weight: 600; fill: #27500A; }
+    .m3 { font-size: 11px; fill: #3B6D11; }
+    .n4 { font-size: 11.5px; font-weight: 600; fill: #085041; }
+    .m4 { font-size: 11px; fill: #0F6E56; }
+    .note { font-size: 11.5px; fill: #3D3B36; }
+  </style>
+
+  <text class="h" x="58" y="46">世界形态</text>
+  <text class="h" x="250" y="46">典型形态</text>
+  <text class="h" x="470" y="46">隔离单位</text>
+
+  <rect class="r1" x="40" y="56" width="600" height="56" rx="8"/>
+  <text class="n1" x="58" y="88">① 无世界</text>
+  <text class="m1" x="136" y="88">状态外置在库里</text>
+  <text class="m1" x="250" y="88">云端 chat：历史同步，一行记录</text>
+  <text class="m1" x="470" y="88">数据面授权（按用户过滤）</text>
+
+  <rect class="r2" x="40" y="120" width="600" height="56" rx="8"/>
+  <text class="n2" x="58" y="152">② 任务期世界</text>
+  <text class="m2" x="136" y="152">用完即弃</text>
+  <text class="m2" x="250" y="152">云端 agent：每任务一个沙箱</text>
+  <text class="m2" x="470" y="152">每任务一个容器</text>
+
+  <rect class="r3" x="40" y="184" width="600" height="56" rx="8"/>
+  <text class="n3" x="58" y="216">③ 会话期世界</text>
+  <text class="m3" x="136" y="216">结束即回收</text>
+  <text class="m3" x="250" y="216">Devin Devbox：每会话一台完整 VM</text>
+  <text class="m3" x="470" y="216">每会话一台 VM</text>
+
+  <rect class="r4" x="40" y="248" width="600" height="56" rx="8"/>
+  <text class="n4" x="58" y="280">④ 永久世界</text>
+  <text class="m4" x="136" y="280">跨会话存活</text>
+  <text class="m4" x="250" y="280">dsh：cwd 是用户的真实目录</text>
+  <text class="m4" x="470" y="280">每用户容器（唯一可行）</text>
+
+  <text class="note" x="40" y="336">判据：隔离单位由「agent 的世界有多持久」决定 —— 世界越持久，隔离越接近整台机器</text>
+</svg>

@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 492" font-family="-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8A8880"/>
+    </marker>
+  </defs>
+
+  <style>
+    .panel1 { fill: #F3EDF7; stroke: #7A4FA3; stroke-width: 1; }
+    .panel2 { fill: #EAF1FA; stroke: #2F6BAE; stroke-width: 1; }
+    .panel3 { fill: #EEF4EA; stroke: #3B6D11; stroke-width: 1; }
+    .pt1 { font-size: 13px; font-weight: 700; fill: #55307A; }
+    .pt2 { font-size: 13px; font-weight: 700; fill: #1E4E82; }
+    .pt3 { font-size: 13px; font-weight: 700; fill: #2F5A0C; }
+    .b1 { fill: #FFFFFF; stroke: #A98BC4; stroke-width: 1; }
+    .b2 { fill: #FFFFFF; stroke: #7FA6CE; stroke-width: 1; }
+    .b3 { fill: #FFFFFF; stroke: #8FB177; stroke-width: 1; }
+    .bd { fill: #F6F5F2; stroke: #ADABA4; stroke-width: 1; stroke-dasharray: 5 3; }
+    .t1 { font-size: 12px; font-weight: 600; fill: #55307A; }
+    .s1 { font-size: 10.5px; fill: #6B4A87; }
+    .t2 { font-size: 12px; font-weight: 600; fill: #1E4E82; }
+    .s2 { font-size: 10.5px; fill: #3D5C7A; }
+    .t3 { font-size: 12px; font-weight: 600; fill: #2F5A0C; }
+    .s3 { font-size: 10.5px; fill: #46543A; }
+    .td { font-size: 12px; font-weight: 600; fill: #8A8880; }
+    .sd { font-size: 10.5px; fill: #8A8880; }
+    .arrow { fill: none; stroke: #8A8880; stroke-width: 1.5; }
+    .alab { font-size: 11px; fill: #6B6963; }
+  </style>
+
+  <rect class="panel1" x="40" y="40" width="600" height="112" rx="12"/>
+  <text class="pt1" x="58" y="64">企业管理面 · 跨用户必须一致的真相源</text>
+
+  <rect class="b1" x="60" y="76" width="128" height="56" rx="8"/>
+  <text class="t1" x="124" y="98" text-anchor="middle">用户目录</text>
+  <text class="s1" x="124" y="115" text-anchor="middle">SSO · SCIM</text>
+
+  <rect class="b1" x="204" y="76" width="128" height="56" rx="8"/>
+  <text class="t1" x="268" y="98" text-anchor="middle">模型目录与配额</text>
+  <text class="s1" x="268" y="115" text-anchor="middle">准入 · 计费</text>
+
+  <rect class="b1" x="348" y="76" width="128" height="56" rx="8"/>
+  <text class="t1" x="412" y="98" text-anchor="middle">凭据与策略</text>
+  <text class="s1" x="412" y="115" text-anchor="middle">key 收口于此</text>
+
+  <rect class="b1" x="492" y="76" width="128" height="56" rx="8"/>
+  <text class="t1" x="556" y="98" text-anchor="middle">审计与留存</text>
+  <text class="s1" x="556" y="115" text-anchor="middle">合规 · 导出</text>
+
+  <path class="arrow" d="M170 158 L170 194" marker-end="url(#arrow)"/>
+  <text class="alab" x="182" y="180">下发配置与短期凭据</text>
+  <path class="arrow" d="M490 194 L490 158" marker-end="url(#arrow)"/>
+  <text class="alab" x="478" y="180" text-anchor="end">回采审计与用量</text>
+
+  <rect class="panel2" x="40" y="200" width="600" height="112" rx="12"/>
+  <text class="pt2" x="58" y="224">控制面 · 把身份变成路由，把策略变成下发</text>
+
+  <rect class="b2" x="60" y="236" width="128" height="56" rx="8"/>
+  <text class="t2" x="124" y="258" text-anchor="middle">认证与路由</text>
+  <text class="s2" x="124" y="275" text-anchor="middle">身份 → 工作进程</text>
+
+  <rect class="b2" x="204" y="236" width="128" height="56" rx="8"/>
+  <text class="t2" x="268" y="258" text-anchor="middle">模型网关</text>
+  <text class="s2" x="268" y="275" text-anchor="middle">出网唯一路径</text>
+
+  <rect class="b2" x="348" y="236" width="128" height="56" rx="8"/>
+  <text class="t2" x="412" y="258" text-anchor="middle">IM 网关</text>
+  <text class="s2" x="412" y="275" text-anchor="middle">验签与身份映射</text>
+
+  <rect class="b2" x="492" y="236" width="128" height="56" rx="8"/>
+  <text class="t2" x="556" y="258" text-anchor="middle">会话索引</text>
+  <text class="s2" x="556" y="275" text-anchor="middle">谁在哪有哪些会话</text>
+
+  <path class="arrow" d="M170 318 L170 354" marker-end="url(#arrow)"/>
+  <text class="alab" x="182" y="340">启动与路由请求</text>
+  <path class="arrow" d="M490 354 L490 318" marker-end="url(#arrow)"/>
+  <text class="alab" x="478" y="340" text-anchor="end">会话事件通知</text>
+
+  <rect class="panel3" x="40" y="360" width="600" height="112" rx="12"/>
+  <text class="pt3" x="58" y="384">执行面 · 每用户一个 harness，彼此不可见</text>
+
+  <rect class="b3" x="60" y="396" width="128" height="56" rx="8"/>
+  <text class="t3" x="124" y="418" text-anchor="middle">harness A</text>
+  <text class="s3" x="124" y="435" text-anchor="middle">sdk-net 常驻</text>
+
+  <rect class="b3" x="204" y="396" width="128" height="56" rx="8"/>
+  <text class="t3" x="268" y="418" text-anchor="middle">harness B</text>
+  <text class="s3" x="268" y="435" text-anchor="middle">独立容器与卷</text>
+
+  <rect class="b3" x="348" y="396" width="128" height="56" rx="8"/>
+  <text class="t3" x="412" y="418" text-anchor="middle">harness C</text>
+  <text class="s3" x="412" y="435" text-anchor="middle">独立 home 与 cwd</text>
+
+  <rect class="bd" x="492" y="396" width="128" height="56" rx="8"/>
+  <text class="td" x="556" y="418" text-anchor="middle">N 个租户</text>
+  <text class="sd" x="556" y="435" text-anchor="middle">互不可见</text>
+</svg>

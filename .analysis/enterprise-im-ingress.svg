@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 238" font-family="-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8A8880"/>
+    </marker>
+  </defs>
+
+  <style>
+    .b0 { fill: #F1EFE8; stroke: #ADABA4; stroke-width: 1; }
+    .b1 { fill: #F3EDF7; stroke: #7A4FA3; stroke-width: 1; }
+    .b2 { fill: #EAF1FA; stroke: #2F6BAE; stroke-width: 1; }
+    .b3 { fill: #EEF4EA; stroke: #3B6D11; stroke-width: 1; }
+    .t0 { font-size: 12px; font-weight: 600; fill: #2C2C2A; }
+    .s0 { font-size: 10.5px; fill: #5F5E5A; }
+    .t1 { font-size: 12px; font-weight: 600; fill: #55307A; }
+    .s1 { font-size: 10.5px; fill: #6B4A87; }
+    .t2 { font-size: 12px; font-weight: 600; fill: #1E4E82; }
+    .s2 { font-size: 10.5px; fill: #3D5C7A; }
+    .t3 { font-size: 12px; font-weight: 600; fill: #2F5A0C; }
+    .s3 { font-size: 10.5px; fill: #46543A; }
+    .tag { font-size: 10.5px; fill: #8A8880; }
+    .arrow { fill: none; stroke: #8A8880; stroke-width: 1.5; }
+    .ret { fill: none; stroke: #8A8880; stroke-width: 1.5; stroke-dasharray: 5 3; }
+    .rlab { font-size: 11px; fill: #6B6963; }
+    .note { font-size: 11px; fill: #3D3B36; }
+  </style>
+
+  <text class="tag" x="124" y="66" text-anchor="middle">入口</text>
+  <text class="tag" x="268" y="66" text-anchor="middle">企业层</text>
+  <text class="tag" x="412" y="66" text-anchor="middle">控制面</text>
+  <text class="tag" x="556" y="66" text-anchor="middle">执行面</text>
+
+  <rect class="b0" x="60" y="76" width="128" height="56" rx="8"/>
+  <text class="t0" x="124" y="98" text-anchor="middle">IM 平台</text>
+  <text class="s0" x="124" y="115" text-anchor="middle">企微 · 飞书</text>
+
+  <rect class="b1" x="204" y="76" width="128" height="56" rx="8"/>
+  <text class="t1" x="268" y="98" text-anchor="middle">IM 网关</text>
+  <text class="s1" x="268" y="115" text-anchor="middle">验签 · 身份映射</text>
+
+  <rect class="b2" x="348" y="76" width="128" height="56" rx="8"/>
+  <text class="t2" x="412" y="98" text-anchor="middle">控制面</text>
+  <text class="s2" x="412" y="115" text-anchor="middle">会话索引 · 路由</text>
+
+  <rect class="b3" x="492" y="76" width="128" height="56" rx="8"/>
+  <text class="t3" x="556" y="98" text-anchor="middle">用户 harness</text>
+  <text class="s3" x="556" y="115" text-anchor="middle">sdk-net · session</text>
+
+  <path class="arrow" d="M188 104 L202 104" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M332 104 L346 104" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M476 104 L490 104" marker-end="url(#arrow)"/>
+
+  <path class="ret" d="M556 132 L556 176 L268 176 L268 134" marker-end="url(#arrow)"/>
+  <text class="rlab" x="412" y="168" text-anchor="middle">回帖 · 通知经网关格式化后发出</text>
+
+  <text class="note" x="40" y="200">身份映射只发生一次；执行面永不接触 IM 平台凭据</text>
+  <text class="note" x="40" y="218">幂等去重、重试、会话↔线程绑定都归网关层（webhook 家族目前仅单向 fire-and-forget）</text>
+</svg>
