@@ -16,7 +16,7 @@
 
 ![apps 分层全景架构图](apps-architecture-layers.svg)
 
-- **入口层**：CLI、Web、Desktop、Headless、SDK、ACP 六类已支持；IM Bot、移动端/远程为虚线灰底预留位——**其底层能力面已经就绪**（`dsh --profile sdk-net` 把 SDK 契约暴露到 TCP），缺的是 IM 网关与客户端本身（含认证）。
+- **入口层**：CLI、Web、Desktop、Headless、SDK、ACP 六类已支持；IM Bot、移动端/远程为虚线灰底预留位——底层能力面已就绪（SDK 契约经 stdio 暴露，见对接服务层），缺的是 IM 网关与客户端本身（含认证）。
 - **对接服务层**：无单一 app-server，五个协议适配器（HTTP+WS / NDJSON-stdio / NDJSON-TCP / JSON-RPC-stdio / one-shot）全部经由同一条 `runProfile()` 装配路径复用内核。
 - **harness 内核**：Cordis agent 树的模块分组——会话与编排、工具与执行、生态与集成（mcp/skill/hooks 等）、存储与会话数据。
 - **内置运行时**：primary-runtime（Node/CPython/pnpm/wheels，sha256 锁定）随桌面交付；CLI/Web 形态用系统运行时。
@@ -54,7 +54,7 @@ Desktop session:
 
 dsh 的 app-server 化 = 把现有 sdk 能力面（turn/会话/工具/审批/文件/查询）以 latest-only 契约暴露到网络 transport，具体就是三件小事：WS/TCP transport、Typert 方法面快照导出、（可延后的）网络认证。HMR、模块表、注入、resources 这些 UI 投影机制与契约无关，永远留在自家 web UI 的同源快车道上。
 
-**进度（三件小事里两件已落地）**：`packages/bundle/sdk-net` 提供 `dsh --profile sdk-net`——**TCP** transport（每个连接一个 `JsonRpcLineTransport` 包住 socket，NDJSON 分帧，默认连接上限 8，`session.event` / `session.status` / `subagent.*` 通知扇出给所有活连接）与 Typert 方法面快照导出（`--descriptor-snapshot`，可进 CI 比对）。**WS 与网络认证未做**，且监听端**只接受 loopback 绑定**（非回环直接报用法错误），所以现在还不能当公网或跨主机服务用。关键在于契约面实现 `HarnessSdkJsonRpcServer` 与传输类**一行未改**——stdio 的 `sdk` profile 行为完全不变，两者是并存的兄弟而非替代。企业级用法见姊妹篇 §5「阶段 1」。
+dsh 尚未提供网络 transport 的常驻形态（无 `sdk-net` 之类的 TCP profile）：**TCP transport** 缺一个监听壳——既有 SDK 能力面实现与 `JsonRpcLineTransport(Readable, Writable)` 传输抽象不绑 stdio（`packages/sdk/protocol/src/transport.ts`），加一层每连接构造 LineTransport 挂现有方法的 profile 即可，难点是并发生命周期策略；**Typert 方法面快照导出** 缺一个 descriptor JSON 导出命令（registry 已有 reflection + Zod schema）；**WS 与网络认证** 未做，且 loopback 上开 HTTP/WS 会引入浏览器同源面（DNS rebinding / 页面 fetch localhost 都可达），应与认证同批设计。关键在于契约面实现与传输类零改动——stdio 的 `sdk` profile 行为完全不变，网络形态只是并存的兄弟而非替代。
 
 ## 各应用职责
 
@@ -94,12 +94,10 @@ dsh 的 app-server 化 = 把现有 sdk 能力面（turn/会话/工具/审批/文
 |---|---|---|---|---|
 | UI 服务 | `dsh-host-webserver`（`web` / `desktop` profile） | HTTP + WebSocket | 浏览器 / Electron renderer（`/api`） | 无直接对应（Codex UI 非 web） |
 | SDK 服务 | `dsh --profile sdk`：`dsh-sdk-jsonrpc-server` | newline-delimited JSON-RPC over stdio | TS SDK、Python SDK（`python/sdk`） | 约等于 Codex `app-server` |
-| 网络 SDK 服务 | `dsh --profile sdk-net`：`dsh-sdk-net` | newline-delimited JSON-RPC over TCP（仅 loopback） | 常驻客户端；IM / 远程 / 移动接入层的底座 | 约等于 Codex `app-server` 的常驻形态 |
 | 自动化服务 | `@deepseek-ai/dsh-acp`（`acp` profile，automation-only） | JSON-RPC over stdio（Agent Client Protocol） | 编辑器/自动化客户端（Zed 一类） | 约等于 Codex IDE 集成面 |
 | 一次性命令 | `@deepseek-ai/dsh-headless`（`headless` profile） | 无服务：跑完即退；`--json` 输出 NDJSON 事件流 | 脚本、CI | 约等于 `claude -p` |
 
 - wire protocol 收敛在 `packages/sdk/protocol`（命名请求/结果/通知类型，TS 与 Python 共享同一份）。
-- 两个 SDK 面（stdio 与 TCP）**共用同一份能力面实现与同一套 wire 类型**，差别只在 transport 与生命周期归属：stdio 随 stdin EOF 结束、单客户端；`sdk-net` 由客户端 `shutdown` 应答后退出 0、多客户端（默认上限 8），断线不影响已建会话。
 - `host-webserver` 刻意"无知"：不懂业务、不管静态文件，路由与资源由组合方注入（`packages/host/webserver/src/index.ts` 头注释）。
 - Electron 主进程↔host 的 IPC（ready/fatal/shutdown-complete/update-tasks）是桌面壳生命周期控制面，不承载 agent 业务。
 - `headless` bundle 不监听端口、无残留进程，模型、工具、安全默认值与其他面完全一致。
@@ -108,13 +106,13 @@ dsh 的 app-server 化 = 把现有 sdk 能力面（turn/会话/工具/审批/文
 
 - 交互式终端 REPL/TUI 不存在：`apps/cli` 定位是启动器，无 readline/ink 类 TUI 依赖；`packages/terminal` 是 agent 侧的持久终端工具，不是 UI。
 - 最接近的形态是 one-shot：`dsh --profile headless "task"`（约等于 `claude -p`），单任务、无 GUI、可 `--json` 编程消费、可 `--session-id` 恢复对话；会话存储共享，之后可在 web/桌面继续。
-- 需要交互式体验时走 `dsh web`（浏览器）或桌面应用；程序化驱动选 `sdk` profile（TS/Python SDK）或 `acp` profile（编辑器集成）；要让**多个客户端、或常驻进程**共享一个 runtime 时选 `sdk-net` profile（TCP，仅 loopback）。
+- 需要交互式体验时走 `dsh web`（浏览器）或桌面应用；程序化驱动选 `sdk` profile（TS/Python SDK）或 `acp` profile（编辑器集成）。
 
 ### UI 与内核的耦合度：对比 Codex 的 app-server 模式
 
 - **Codex 模式**（协议分层）：内核 + 版本化 app-server（JSON-RPC stdio）作为稳定接缝，TUI/IDE 是独立代码库的客户端，UI 可替换、第三方可依协议自建。
 - **dsh 现状**（同源组合）：存在功能等价的 Remote 层——`packages/api/`（session/workspace/terminal/settings controller，类型化方法调用经共享 Connection/gateway 传输）——但它是 **monorepo 编译期契约**（两端共享类型、同版发布、无版本协商），对外不是稳定协议。更深的耦合在于：host 不只响应 API，还**组装并投递 UI 本身**（模块表 node 半侧合成、`collectIndexInjections` 注入、HMR 通道、resources 活值），client 是同一棵 Cordis 树上的插件——两端是一个分布式程序，而非两台经协议对话的独立程序。
-- **结论**：UI 事实上不可替换；第三方 UI 只能退到 SDK/ACP 契约（stdio，或 `sdk-net` 的 TCP；面较窄，无 UI 投影）。**契约面已不再是瓶颈**——`sdk-net` 已把能力面放上网络、stdout 保持干净；仍缺位的是 IM 网关、移动端/远程客户端这些**消费方**本身以及认证。若要支持外部 UI，演进路径是把 `packages/api` + Connection 协议冻结为版本化契约（app-server 化）。
+- **结论**：UI 事实上不可替换；第三方 UI 只能退到 SDK/ACP 契约（stdio，面较窄，无 UI 投影）。**契约面已不再是瓶颈**——能力面经 stdio 暴露、stdout 保持干净；仍缺位的是网络 transport 常驻形态、IM 网关、移动端/远程客户端这些**消费方**本身以及认证。若要支持外部 UI，演进路径是把 `packages/api` + Connection 协议冻结为版本化契约（app-server 化）。
 
 #### app-server 化的可行性评估
 
@@ -122,7 +120,7 @@ dsh 的 app-server 化 = 把现有 sdk 能力面（turn/会话/工具/审批/文
 - **无"约"**：Typert 描述符无版本字段；sdk 协议无版本协商（靠"客户端 spawn 同版本 runtime"绕开）；gateway 绑定 webserver WS + 本机 cookie 模型，不对外监听。
 - **改造评估**：机械部分小（Typert 加版本 → 握手协商 → 独立 socket + 独立认证 → descriptor 快照 CI）；结构性成本在三处——UI 投影面（模块表/injections/HMR/resources）无法轻易契约化、多版本共存运维、认证模型重设计。
 - **建议路径**：① sdk protocol 版本化 v1（面最窄收益最大，IM/远程入口立即可接）→ ② Typert 选择性冻结稳定 controller（session/workspace 优先）→ ③ UI 投影面永不承诺。渐进式获得"核心能力有稳定契约 + 富 UI 走同源快车道"的双轨。
-- **现状核对（已支持 vs 需改动）**：能力面方法（initialize/session.prompt/事件通知/图片/shutdown，`packages/sdk/server`）、传输抽象（`JsonRpcLineTransport(Readable, Writable)` 不绑 stdio，`sdk/protocol/src/transport.ts:70`）、NDJSON 分帧、profile 装配均已就绪。需改动三处：① WS/TCP 监听插件——现有 `bundle/sdk-app` 把生命周期绑死在 stdin EOF（单客户端），需新 profile（如 `bundle/sdk-net`）每连接构造 LineTransport 挂现有方法，难点是并发生命周期策略，传输类零改动；② Typert registry 已有 reflection + Zod schema，缺一个 descriptor JSON 导出命令；③ 网络认证仅非回环监听才需要。结论：不是改造协议栈，是给现有协议栈加监听壳 + 导出命令。**该结论已被实现验证**：`bundle/sdk-net` 就是那个"监听壳 + 导出命令"——① ② 已落地，③ 以"只绑 loopback"替代未做的认证，`HarnessSdkJsonRpcServer` 与传输类零改动。
+- **现状核对（已支持 vs 需改动）**：能力面方法（initialize/session.prompt/事件通知/图片/shutdown，`packages/sdk/server`）、传输抽象（`JsonRpcLineTransport(Readable, Writable)` 不绑 stdio，`sdk/protocol/src/transport.ts:70`）、NDJSON 分帧、profile 装配均已就绪。需改动三处：① WS/TCP 监听插件——现有 `bundle/sdk-app` 把生命周期绑死在 stdin EOF（单客户端），需新 profile（如 `bundle/sdk-net`）每连接构造 LineTransport 挂现有方法，难点是并发生命周期策略，传输类零改动；② Typert registry 已有 reflection + Zod schema，缺一个 descriptor JSON 导出命令；③ 网络认证仅非回环监听才需要。结论：不是改造协议栈，是给现有协议栈加监听壳 + 导出命令。
 - **轻量替代（latest-only 契约）**：不承诺跨版本兼容，契约 = 当版发布的方法面快照。sdk 协议已是此模式（同版本 spawn = 天然 latest-only）。底层 controller（session/workspace/fs/shell/审批）方法面稳定占比大，高频变区集中在 UI 投影面（本就不进契约）。补三件小事即可对接外部接入层：sdk jsonrpc server 增加 WS/TCP transport（现仅 stdio）、内网/本机场景可延后的网络认证、Typert → descriptor JSON 快照导出命令。性价比优于渐进版本化，版本协商/兼容承诺可待外部生态成熟后再补（Codex app-server 早期即如此演化）。**契约边界**：只暴露 harness 能力面（turn 驱动/会话/工具/审批/文件/会话查询），UI 投影机制（HMR、模块表合成、injections、resources）永不上契约、仅服务自家 web UI——此边界与 sdk 协议现有覆盖面恰好重合，故"能力面 app-server"无需新造层，复用 sdk 面换 transport 即得。
 
 ## 关键设计决策
@@ -138,4 +136,3 @@ dsh 的 app-server 化 = 把现有 sdk 能力面（turn/会话/工具/审批/文
 1. desktop profile 的 bundle 列表内容（`loadProfileDirectory` 读取 projectDir 内 profile，具体 bundles 未逐项确认）。
 2. CLI `dsh web` 的默认端口（desktop 固定 19387；CLI 侧默认值未确认）。
 3. `packages/ptc-runtime` 与 primary-runtime 的关系：未发现直接引用，PTC 的 Python 后端是独立实验包 `dsh-experimental-ptc-runtime-python`。
-4. **`sdk-net` 加 WS/HTTP 的形态**：能力面与传输是解耦的（`JsonRpcLineTransport` 用 `(Readable, Writable)` 构造），WS 侧只需一层 WS message ↔ 行流的薄适配、协议与方法面零改动。但 loopback 上开 HTTP/WS 会引入**浏览器同源面**（DNS rebinding / 页面 fetch localhost 都可达），所以应与认证同批设计——目前未设计。企业级相关考量见姊妹篇 §1.4 与 §4.1。
