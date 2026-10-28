@@ -14,18 +14,19 @@
 ## 端到端顺序清单
 
 ```
-① apps/cli/src/bin.ts         runCli() 解析参数
-② apps/cli/src/profile-boot.ts runProfile() 装配 profile
-③ @deepseek-ai/dsh-app-boot     boot() 挂载 Cordis 插件树
-④ packages/util/official-bundles bundles.ts  PROFILE_TEMPLATES（profile → bundle 列表）
-⑤ packages/host/webserver/src/index.ts  webServer service 起 HTTP+WS（端口：CLI 默认 / desktop 固定 19387）
-⑥ 浏览器 → /api  POST session.prompt
-⑦ packages/core/agent-loop/src/index.ts  AgentLoop 开一个 turn
-⑧ packages/llm/*              调 LLM（provider 路由）
-⑨ packages/core/tools/src/index.ts       ToolsService.selectExecutor + execute 跑工具
-⑩ packages/core/agent-loop     turn 结束，产出回复
-⑪ packages/session/*          会话日志 append-only 落盘
-⑫ session/event 事件经 webserver/WS 回传浏览器
+① apps/cli/src/bin.ts              runCli() 解析参数
+② apps/cli/src/profile-boot.ts     runProfile() 装配 profile
+③ @deepseek-ai/dsh-app-boot        boot() 挂载 Cordis 插件树
+④ packages/util/official-bundles/bundles.ts  PROFILE_TEMPLATES（profile → bundle 列表）
+⑤ packages/host/webserver/src/index.ts  webServer service 起 HTTP+WS（CLI 默认 3080；桌面端口由 Electron launcher 运行时注入）
+⑥ 浏览器 → session.prompt 远程调用（WS /api/remote.mux）
+⑦ packages/api/session-controller/src/index.ts  @Remote('prompt') 落到内核
+⑧ packages/core/agent-loop/src/agent.ts  followup() → wakeDriver() → turn()
+⑨ packages/llm/*                    调 LLM（provider 路由）
+⑩ packages/core/tools/src/*         executeToolBatch + pipeline 跑工具
+⑪ packages/core/agent-loop          turn 结束，产出回复
+⑫ packages/session/session-persistence-jsonl  会话日志 append-only 落盘
+⑬ session/event 事件经 WS 回传浏览器
 ```
 
 ## 逐段说明
@@ -45,22 +46,30 @@
 > 读码时记住：**能力面 = bundle 声明挂哪些插件**。改"装什么"改这里，不是改内核。
 
 ### ⑤ web 服务起来
-`packages/host/webserver/src/index.ts` 是一个 Cordis service（`declare module '@deepseek-ai/cordis' { interface Context { webServer: WebServer } }`）。它用 `node:http`（或 `node:https` 带证书）起服务，**自己不处理业务、不服务静态文件**——路由由组合方（client/host 插件）通过 `webServer` service 注入。监听端口由 profile/bundle 决定：CLI 用默认值，desktop 固定 `19387`。
+`packages/host/webserver/src/index.ts` 是一个 Cordis service（`declare module '@deepseek-ai/cordis' { interface Context { webServer: WebServer } }`）。它用 `node:http`（或 `node:https` 带证书）起服务，**自己不处理业务、不服务静态文件**——路由由组合方（client/host 插件）通过 `webServer` service 注入。
+- **端口**：CLI `dsh web` 默认 **3080**（来自 `packages/bundle/web-app/cordis.patch.yml` 的 `port: ctx.webStartup.port ?? 3080`，由 `packages/bundle/web-app/src/startup.ts` 解析 `--port` 注入）。**desktop 由 desktop-host 固定传 `--port 19387`**（`apps/desktop-host/src/index.ts` 的应用参数），所以桌面子进程端口是 19387——这是 launcher 传参，不是 webserver 包自身的默认常量。
+- **WS 升级路由**：gateway 在 `packages/api/gateway/src/index.ts` 用 `webServer.registerUpgrade()` 注册 WS，路径 `/api/remote.mux`。
 
 ### ⑥ 用户输入 prompt
-浏览器经 `/api` 发 `session.prompt`。Web 形态下请求进 `webServer` 注册的路由，落到对应的 session controller（在 `packages/client/*` 或 host 组合层）。具体 controller 实现随版本，不必死记路径——关键是它拿到一个 `Session`，调它的 `prompt`。
+浏览器经 `/api` 发 Typert Remote 调用 `session.prompt`，走 WS mux → `packages/api/gateway` 的 Remote dispatch。
 
-### ⑦ ⑧ ⑨ turn 执行（内核核心）
-`packages/core/agent-loop/src/index.ts` 的 `AgentLoop` 类（`extends Service implements AgentFactory`）负责跑 turn：
-- 一个 turn = 组装上下文（含 `packages/context`、`packages/compaction` 的压缩）→ 调 LLM（`packages/llm/*`，`registerAdapter` 做 provider 路由）→ 看模型是否回 `tool_call`。
-- 若回 tool_call：`packages/core/tools/src/index.ts` 的 `ToolsService` 用 `selectExecutor(scope)` 选执行器，再 `execute(input)` 跑工具；**若当前组合没装任何 executor，`selectExecutor` 抛 `ToolExecutorUnavailableError`**（你之前在 `examples/cordis-tutorial` 跑 `greet-tool` 撞到的就是它）。
+### ⑦ 落到控制器（内核入口）
+- **Web 形态**：`packages/api/session-controller/src/index.ts:451` 的 `@Remote('prompt') prompt()` → `commands.ts:305` `prompt()` 校验后调 `agent.followup(message)`（`commands.ts:340`）。
+- **SDK 形态**（更直观）：`packages/sdk/server/src/server.ts:253` `prompt()`（在 `handleRequest` 的 `case 'session/prompt'` 分支）→ `rec.handle.agent.followup(message)`。
+- 两条线都汇聚到 `followup()`（`packages/core/agent-loop/src/agent.ts:172`）。
+
+### ⑧ ⑨ turn 执行（内核核心）
+`followup()` → `wakeDriver()`（`agent.ts:243`）→ `kick()` → **`turn()` 是 turn 执行入口**（`agent.ts:320`），内部 `while (await this.turn()) {}`；每个 step 是 `step()`（`agent.ts:428`）。
+- 一个 turn = 组装上下文（含 `packages/context`、`packages/compaction` 的压缩）→ 调 LLM（`agent.ts:483` `loopCtx.llm.stream(request)`，provider 路由在 `packages/llm/*`，如 `llm-deepseek/src/adapter.ts` 的 `generate()`）→ 看模型是否回 `tool_call`。
+- 若回 tool_call：`agent.ts:583` 调 `tools.execute({ calls: toolCalls, ... })` → `packages/core/tools/src/batch.ts:50` `executeToolBatch()` → pipeline（`packages/core/tools/src/pipeline.ts`）按工具名 `resolveExecution` 解析、`dispatchToolBody()`（`pipeline.ts:258/275`）执行具体 `tool.execute()`。
+- **若当前组合没装任何 executor**，`ToolsService.selectExecutor`（`packages/core/tools/src/index.ts`）抛 `ToolExecutorUnavailableError`（你之前在 `examples/cordis-tutorial` 跑 `greet-tool` 撞到的就是它）。
 - 工具结果回灌上下文，再调一次 LLM，直到产出回复文本。
 
 ### ⑩ ⑪ 会话落盘
-turn 结束后，会话状态经 `packages/session/*`（append-only 日志）持久化——这是"会话 = 常驻 agent-loop + cwd"可恢复的基础。
+会话日志是 **append-only** 的 JSONL 事件流：`packages/session/session-persistence`（抽象 handle/contract，`append(events)` 接口）+ `packages/session/session-persistence-jsonl`（写 `.jsonl`/`.jsonl.zstd` 实现）。`session-persistence-jsonl` 直接订阅 `session/event` 把每个事件顺序写盘（写前按 seq 连续性校验）。这是"会话 = 常驻 agent-loop + cwd"可恢复的基础。
 
 ### ⑫ 事件回传
-流式事件（token、工具调用、turn/end…）以 `session/event` 形式发出。SDK 形态下的回传链路最清晰：`packages/sdk/server/src/server.ts` 订阅 `ctx.on('session/event', (session, event) => { ... this.transport.notify('session.event', payload) })`，把事件经 transport 扇出给客户端（注意它不补历史，断线重连拿不到断连期间的事件——这正是企业级"断线续读"要补的点）。Web 形态走同源 WS，机制同类。
+流式事件（token、工具调用、turn/end…）以 `session/event` 形式发出。SDK 形态最清晰：`packages/sdk/server/src/server.ts:154` 订阅 `ctx.on('session/event', ...)` → `this.transport.notify('session.event', payload)` 扇出给客户端（注意它不补历史，断线重连拿不到断连期间的事件——这正是企业级"断线续读"要补的点）。Web 形态走同源 WS `/api/remote.mux`，由 gateway 的 Remote 事件流回传，机制同类。
 
 ## SDK 形态与 Web 形态的差异（一句话）
 

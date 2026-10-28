@@ -42,7 +42,7 @@ runProfile('web')
                       └─ 一棵具体的 Cordis 树成形
 ```
 
-- `packages/boot/app-boot` 负责应用启动编排；
+- `packages/boot`（包 `@deepseek-ai/dsh-app-boot`）负责应用启动编排（实际 `boot()` 所在）；
 - `packages/util/official-bundles` 持有官方 `PROFILE_TEMPLATES`（把 `web`/`desktop`/`headless`/`sdk` 等映射成具体 bundle 集合）；
 - `packages/bundle/*` 是各 profile 的 bundle 定义。
 - **没有"一个 app-server 二进制"**：按消费方分层多个服务面（UI / SDK-stdio / ACP / headless），由 profile 决定装哪个，内核始终是同一棵树。
@@ -59,12 +59,14 @@ runProfile('web')
 桌面会话拓扑（记住这个图，后面调桌面 bug 有用）：
 
 ```
-Electron main (apps/desktop main.ts)
+Electron main (apps/desktop/src/main.ts)
   |- renderer (沙箱) -- dsh-app://app = apps/web 产物
-  |    '- /api -- auth cookie --> 127.0.0.1:19387
-  '- desktop-host 子进程 (ELECTRON_RUN_AS_NODE)
-       '- runProfile('desktop'): webserver:19387 + agent + 插件
+  |    '- /api -- auth cookie --> 127.0.0.1:<port>
+  '- desktop-host 子进程 (apps/desktop-host/src/index.ts, ELECTRON_RUN_AS_NODE)
+       '- runProfile('desktop'): webserver:<port> + agent + 插件
 ```
+
+> 端口注记：desktop 子进程的 webserver 端口由 desktop-host 固定传 `--port 19387`（`apps/desktop-host/src/index.ts` 的应用参数），桌面端口因此是 19387；CLI `dsh web` 默认 3080（来自 `packages/bundle/web-app/cordis.patch.yml`）。二者都是启动方注入，webserver 包自身没有硬编码端口常量。
 
 ## 图层 4：一次会话的生命周期（turn 的循环）
 

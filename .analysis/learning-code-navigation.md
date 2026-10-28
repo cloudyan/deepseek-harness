@@ -24,7 +24,7 @@
 | 想搞懂 | 去哪看 |
 |---|---|
 | `dsh` 命令怎么开始、怎么解析参数 | `apps/cli/src/bin.ts` → 调用 `runProfile()` |
-| `runProfile()` 定义、装配主流程 | `packages/boot/app-boot/src/`（应用启动编排） |
+| `runProfile()` 定义、装配主流程 | `apps/cli/src/profile-boot.ts` → 调 `@deepseek-ai/dsh-app-boot` 的 `boot()`（包在 `packages/boot/`，**不是** `packages/boot/app-boot` 目录） |
 | profile 名 → 具体 bundle 集合的映射 | `packages/util/official-bundles/src/bundles.ts`（`PROFILE_TEMPLATES`） |
 | 各 profile 的 bundle 定义（挂哪些插件） | `packages/bundle/*`（如 `bundle/web-app`、`bundle/sdk-app`、`bundle/sdk-minimal`） |
 | cordis.yml / cordis.patch.yml 的加载与 overlay | `packages/boot/*` 的 loader 逻辑；Cordis 侧见 vendor/cordis |
@@ -33,8 +33,8 @@
 
 | 想搞懂 | 去哪看 |
 |---|---|
-| agent 循环（一个 turn 怎么跑） | `packages/core/agent-loop/src/` |
-| 会话模型与持久化 | `packages/session/*`、`packages/session-query/*`、`session-persistence-*`（append-only 日志） |
+| agent 循环（一个 turn 怎么跑） | `packages/core/agent-loop/src/`（`agent.ts` 的 `turn()` 是入口，`AgentLoop` 是 service） |
+| 会话模型与持久化 | `packages/session/session-persistence`（抽象 handle，`append(events)`）+ `packages/session/session-persistence-jsonl`（JSONL 落盘，append-only） |
 | 工具注册与执行 | `packages/core/tools/src/`（执行入口、executor 选择） |
 | 事件系统（typed events / waterfall） | `packages/core/`（事件 map）+ `docs/cordis-api/events.md` |
 | 上下文组装与压缩 | `packages/context/*`、`packages/compaction/*` |
@@ -46,7 +46,7 @@
 
 | 想搞懂 | 去哪看 |
 |---|---|
-| web/桌面 HTTP+WS 服务怎么起 | `packages/host/webserver/src/index.ts`（监听端口：CLI 默认、desktop 固定 19387） |
+| web/桌面 HTTP+WS 服务怎么起 | `packages/host/webserver/src/index.ts`（端口由启动方注入：CLI `dsh web` 默认 3080，desktop-host 固定传 `--port 19387`） |
 | SDK JSON-RPC 服务端（stdio） | `packages/sdk/server/src/` |
 | gateway / controller（类型化方法面） | `packages/api/src/` |
 | 客户端 GUI（Electron/Web 插件） | `packages/client/*`（大量 `ui-*` 插件） |
