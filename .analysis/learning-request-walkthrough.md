@@ -45,6 +45,8 @@
 
 > 读码时记住：**能力面 = bundle 声明挂哪些插件**。改"装什么"改这里，不是改内核。
 
+> **平台感知（master 新增）**：bundle 的 `package.json` 可声明 `dsh.bundle.platforms`（Node 平台名数组，如 `['darwin']`）。`packages/boot/app-boot/src/bundle-platform.ts` 的 `assertBundlePlatform(platforms, process.platform)` 在装配/选择 bundle 前校验：若 Host 平台不在声明里，抛 `UnsupportedBundlePlatformError`，该 bundle 被跳过。这就是为什么某些 bundle（例如 CUA 的 `cua-bundle`、部分 experimental）只在特定 Host（如 macOS/桌面）出现，在 CLI/Web 形态下自动隐藏且不被激活。读 `runProfile` 装配时要把这层过滤算进去。
+
 ### ⑤ web 服务起来
 `packages/host/webserver/src/index.ts` 是一个 Cordis service（`declare module '@deepseek-ai/cordis' { interface Context { webServer: WebServer } }`）。它用 `node:http`（或 `node:https` 带证书）起服务，**自己不处理业务、不服务静态文件**——路由由组合方（client/host 插件）通过 `webServer` service 注入。
 - **端口**：CLI `dsh web` 默认 **3080**（来自 `packages/bundle/web-app/cordis.patch.yml` 的 `port: ctx.webStartup.port ?? 3080`，由 `packages/bundle/web-app/src/startup.ts` 解析 `--port` 注入）。**desktop 由 desktop-host 固定传 `--port 19387`**（`apps/desktop-host/src/index.ts` 的应用参数），所以桌面子进程端口是 19387——这是 launcher 传参，不是 webserver 包自身的默认常量。
@@ -54,7 +56,8 @@
 浏览器经 `/api` 发 Typert Remote 调用 `session.prompt`，走 WS mux → `packages/api/gateway` 的 Remote dispatch。
 
 ### ⑦ 落到控制器（内核入口）
-- **Web 形态**：`packages/api/session-controller/src/index.ts:451` 的 `@Remote('prompt') prompt()` → `commands.ts:305` `prompt()` 校验后调 `agent.followup(message)`（`commands.ts:340`）。
+- **Web 形态**：`packages/api/session-controller/src/index.ts:464` 的 `@Remote('prompt') prompt()`（属于 `SessionController`，namespace `session`）只是 Remote 入口，它委托给 `packages/api/session-controller/src/commands.ts:304` 的 `SessionCommandController.prompt()` 校验后调 `agent.followup(message)`。
+  - 注意：master 把 session-controller **拆成了多个子 controller**：`index.ts` 现在只做资源解析与装配，真正的实现分散在 `agent.ts`(Agent 命令)、`commands.ts`(prompt/cancel/follow)、`control.ts`、`history/controller.ts`、`state/controller.ts`、`web/controller.ts`、`list.ts`。读代码时别再找"一个大 index.ts 包含所有逻辑"。
 - **SDK 形态**（更直观）：`packages/sdk/server/src/server.ts:253` `prompt()`（在 `handleRequest` 的 `case 'session/prompt'` 分支）→ `rec.handle.agent.followup(message)`。
 - 两条线都汇聚到 `followup()`（`packages/core/agent-loop/src/agent.ts:172`）。
 
@@ -70,6 +73,7 @@
 
 ### ⑫ 事件回传
 流式事件（token、工具调用、turn/end…）以 `session/event` 形式发出。SDK 形态最清晰：`packages/sdk/server/src/server.ts:154` 订阅 `ctx.on('session/event', ...)` → `this.transport.notify('session.event', payload)` 扇出给客户端（注意它不补历史，断线重连拿不到断连期间的事件——这正是企业级"断线续读"要补的点）。Web 形态走同源 WS `/api/remote.mux`，由 gateway 的 Remote 事件流回传，机制同类。
+- **新增能力（master）**：Gateway 现在暴露 `getPendingRemoteEvents(): readonly PendingRemoteEventInfo[]`（`packages/api/gateway/src/types.ts:165`）——客户端读取 session 状态时可以顺带看到"Gateway 已收到、尚未推送给你的远程事件"，用于填补轮询/重连间隙的可见性。这是 `12` 段事件链路的延伸，不影响 `session/event` 的派发机制。
 
 ## SDK 形态与 Web 形态的差异（一句话）
 

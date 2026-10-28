@@ -27,6 +27,7 @@
 | `runProfile()` 定义、装配主流程 | `apps/cli/src/profile-boot.ts` → 调 `@deepseek-ai/dsh-app-boot` 的 `boot()`（包在 `packages/boot/`，**不是** `packages/boot/app-boot` 目录） |
 | profile 名 → 具体 bundle 集合的映射 | `packages/util/official-bundles/src/bundles.ts`（`PROFILE_TEMPLATES`） |
 | 各 profile 的 bundle 定义（挂哪些插件） | `packages/bundle/*`（如 `bundle/web-app`、`bundle/sdk-app`、`bundle/sdk-minimal`） |
+| bundle 的平台感知激活（哪些 Host 能装） | `packages/boot/app-boot/src/bundle-platform.ts`（`assertBundlePlatform` 读 `dsh.bundle.platforms`，不匹配则跳过/报错） |
 | cordis.yml / cordis.patch.yml 的加载与 overlay | `packages/boot/*` 的 loader 逻辑；Cordis 侧见 vendor/cordis |
 
 ### 内核核心
@@ -48,7 +49,7 @@
 |---|---|
 | web/桌面 HTTP+WS 服务怎么起 | `packages/host/webserver/src/index.ts`（端口由启动方注入：CLI `dsh web` 默认 3080，desktop-host 固定传 `--port 19387`） |
 | SDK JSON-RPC 服务端（stdio） | `packages/sdk/server/src/` |
-| gateway / controller（类型化方法面） | `packages/api/src/` |
+| gateway / controller（类型化方法面） | `packages/api/src/`；session 控制器已拆分为 `session-controller/src/` 下的 `index.ts`(Remote 入口+资源解析)、`commands.ts`(prompt/cancel/follow)、`control.ts`、`history/`、`state/`、`web/`、`list.ts`；gateway 的 `getPendingRemoteEvents()` 在 `packages/api/gateway/src/types.ts` |
 | 客户端 GUI（Electron/Web 插件） | `packages/client/*`（大量 `ui-*` 插件） |
 | 桌面主进程 / host 子进程 | `apps/desktop/src/main.ts`、`apps/desktop-host/src/index.ts` |
 

@@ -45,6 +45,7 @@ runProfile('web')
 - `packages/boot`（包 `@deepseek-ai/dsh-app-boot`）负责应用启动编排（实际 `boot()` 所在）；
 - `packages/util/official-bundles` 持有官方 `PROFILE_TEMPLATES`（把 `web`/`desktop`/`headless`/`sdk` 等映射成具体 bundle 集合）；
 - `packages/bundle/*` 是各 profile 的 bundle 定义。
+- **平台感知（master）**：bundle 可在 `package.json` 声明 `dsh.bundle.platforms`，装配前由 `packages/boot/app-boot/src/bundle-platform.ts` 校验 Host 平台，不匹配的 bundle 被跳过（如 CUA 的 `cua-bundle` 仅 macOS/桌面启用）。
 - **没有"一个 app-server 二进制"**：按消费方分层多个服务面（UI / SDK-stdio / ACP / headless），由 profile 决定装哪个，内核始终是同一棵树。
 
 ## 图层 3：四应用外壳（交付层，业务逻辑为零）
@@ -82,6 +83,7 @@ Electron main (apps/desktop/src/main.ts)
             → 是：tools 包选 executor → 执行工具 → 结果回灌上下文 → 再调 LLM
             → 否：产出回复文本
        → 流式事件经 session-event 通知回客户端（WS / stdio）
+       → Gateway 另暴露 getPendingRemoteEvents()，客户端可见"已收未推"的事件间隙
   → 会话日志 append-only 落盘（session-persistence-*）
 ```
 
